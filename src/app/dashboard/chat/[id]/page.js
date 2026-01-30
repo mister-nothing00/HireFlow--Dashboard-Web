@@ -307,3 +307,6 @@ export default function ChatDetailPage() {
     </div>
   );
 }
+
+
+// Explanation:// This code defines a chat detail page in a Next.js application using React. It fetches match and message data from a Supabase backend, subscribes to real-time message updates, and allows sending new messages. The UI includes a header with match info, a scrollable message area, and an input form for sending messages. The code handles loading states, error handling, and formats message timestamps for better user experience.
