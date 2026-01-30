@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Briefcase, Users, MessageSquare, Settings, LogOut } from 'lucide-react';
+import { Home, Briefcase, Users, MessageSquare, MessageCircle, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -8,12 +8,13 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
 
   const navigation = [
-    { name: 'Home', href: '/dashboard', icon: Home },
-    { name: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
-    { name: 'Candidati', href: '/dashboard/candidates', icon: Users },
-    { name: 'Matches', href: '/dashboard/matches', icon: MessageSquare },
-    { name: 'Impostazioni', href: '/dashboard/settings', icon: Settings },
-  ];
+  { name: 'Home', href: '/dashboard', icon: Home },
+  { name: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
+  { name: 'Candidati', href: '/dashboard/candidates', icon: Users },
+  { name: 'Matches', href: '/dashboard/matches', icon: MessageSquare },
+  { name: 'Chat', href: '/dashboard/chat', icon: MessageCircle }, 
+  { name: 'Impostazioni', href: '/dashboard/settings', icon: Settings },
+];
 
   const isActive = (href) => {
     if (href === '/dashboard') {
