@@ -1,37 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, MapPin, Euro, Home, Calendar, Edit2, Trash2, Eye } from 'lucide-react';
+import { Plus, MapPin, Euro, Calendar, Edit2, Trash2, Eye } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { useJobs } from '@/lib/hooks/useJobs';
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('jobs')
-        .select(`
-          *,
-          company:companies(name, logo_url)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setJobs(data || []);
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { jobs, loading } = useJobs(); // ✅ Centralizzato con real-time!
 
   const getRemoteIcon = (policy) => {
     if (policy === 'remote') return '🏠';
@@ -39,7 +13,7 @@ export default function JobsPage() {
     return '🏢';
   };
 
-  const formatSalary = (min, max, currency = 'EUR') => {
+  const formatSalary = (min, max) => {
     return `€${min.toLocaleString()} - €${max.toLocaleString()}`;
   };
 

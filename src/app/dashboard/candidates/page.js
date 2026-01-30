@@ -1,102 +1,73 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { ArrowLeft, X, Heart, Star, MapPin, Euro, Briefcase } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { X, Heart, Star, MapPin, Euro, Briefcase } from "lucide-react";
+import { useState } from "react";
+import { useCandidates } from "@/lib/hooks/useCandidates";
+import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 
 export default function CandidatesPage() {
-  const [candidates, setCandidates] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { currentCandidate, remainingCandidates, nextCandidate, loading } =
+    useCandidates();
+  const { company, addSwipe } = useStore();
   const [swipeDirection, setSwipeDirection] = useState(null);
 
-  // TODO: Replace with real company_id from auth
-  const COMPANY_ID = 'cdf8c6e0-8f89-4d3f-b123-456789abcdef';
-
-  useEffect(() => {
-    fetchCandidates();
-  }, []);
-
-  const fetchCandidates = async () => {
-    try {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from('candidates')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-
-      console.log('✅ Candidates loaded:', data?.length || 0);
-      setCandidates(data || []);
-    } catch (error) {
-      console.error('Error fetching candidates:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSwipe = async (direction) => {
-    const currentCandidate = candidates[currentIndex];
     if (!currentCandidate) return;
 
-    console.log(`${direction === 'right' ? '✅' : '❌'} Swipe ${direction}:`, currentCandidate.first_name);
+    console.log(
+      `${direction === "right" ? "✅" : "❌"} Swipe ${direction}:`,
+      currentCandidate.first_name,
+    );
 
-    // Animazione swipe
     setSwipeDirection(direction);
 
     try {
-      // Salva swipe su DB
-      const { error } = await supabase
-        .from('company_swipes')
-        .insert([{
-          job_id: null, // TODO: Collegare a job specifico
+      const { error } = await supabase.from("company_swipes").insert([
+        {
+          job_id: null,
           candidate_id: currentCandidate.id,
-          direction: direction === 'right' ? 'right' : 'left',
-        }]);
+          direction: direction === "right" ? "right" : "left",
+        },
+      ]);
 
       if (error) {
-        console.error('Error saving swipe:', error);
+        console.error("Error saving swipe:", error);
+      } else {
+        addSwipe(currentCandidate.id, direction);
       }
 
-      // Se swipe right, controlla se c'è match
-      if (direction === 'right') {
+      if (direction === "right") {
         await checkForMatch(currentCandidate.id);
       }
-
     } catch (err) {
-      console.error('Swipe error:', err);
+      console.error("Swipe error:", err);
     }
 
-    // Passa al prossimo candidato dopo animazione
     setTimeout(() => {
       setSwipeDirection(null);
-      setCurrentIndex(prev => prev + 1);
+      nextCandidate();
     }, 300);
   };
 
   const checkForMatch = async (candidateId) => {
     try {
-      // Controlla se candidato ha swipato right su un nostro job
       const { data: candidateSwipes, error } = await supabase
-        .from('swipes')
-        .select('job_id')
-        .eq('candidate_id', candidateId)
-        .eq('direction', 'right');
+        .from("swipes")
+        .select("job_id")
+        .eq("candidate_id", candidateId)
+        .eq("direction", "right");
 
       if (error) throw error;
 
       if (candidateSwipes && candidateSwipes.length > 0) {
-        console.log('🎉 MATCH! Candidato ha swipato right su uno dei nostri job!');
-        // TODO: Crea match nella tabella matches
-        // TODO: Mostra notification
-        alert('🎉 È un MATCH! Il candidato ha già swipato right su un tuo job!');
+        console.log("🎉 MATCH!");
+        alert(
+          "🎉 È un MATCH! Il candidato ha già swipato right su un tuo job!",
+        );
       }
     } catch (error) {
-      console.error('Error checking match:', error);
+      console.error("Error checking match:", error);
     }
   };
 
@@ -111,8 +82,6 @@ export default function CandidatesPage() {
     );
   }
 
-  const currentCandidate = candidates[currentIndex];
-
   if (!currentCandidate) {
     return (
       <div className="p-8">
@@ -124,12 +93,6 @@ export default function CandidatesPage() {
           <p className="text-gray-600 mb-8">
             Torna più tardi per nuovi profili o rivedi i tuoi match.
           </p>
-          <button
-            onClick={() => setCurrentIndex(0)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
-          >
-            Ricomincia da Capo
-          </button>
         </div>
       </div>
     );
@@ -145,33 +108,24 @@ export default function CandidatesPage() {
               Scopri Candidati
             </h1>
             <p className="text-gray-600 mt-1">
-              {candidates.length - currentIndex} {candidates.length - currentIndex === 1 ? 'profilo disponibile' : 'profili disponibili'}
+              {remainingCandidates}{" "}
+              {remainingCandidates === 1
+                ? "profilo disponibile"
+                : "profili disponibili"}
             </p>
           </div>
         </div>
 
-        {/* Card Stack */}
-        <div className="relative" style={{ height: '600px' }}>
-          {/* Next cards (preview) */}
-          {candidates.slice(currentIndex + 1, currentIndex + 3).map((candidate, offset) => (
-            <div
-              key={candidate.id}
-              className="absolute inset-0 bg-white rounded-2xl shadow-lg"
-              style={{
-                transform: `scale(${1 - (offset + 1) * 0.05}) translateY(${(offset + 1) * 10}px)`,
-                zIndex: 100 - offset,
-                opacity: 1 - (offset + 1) * 0.2,
-              }}
-            />
-          ))}
-
-          {/* Current card */}
+        {/* Card */}
+        <div className="relative" style={{ height: "600px" }}>
           <div
             className={`absolute inset-0 bg-white rounded-2xl shadow-2xl transition-all duration-300 ${
-              swipeDirection === 'left' ? '-translate-x-full opacity-0' :
-              swipeDirection === 'right' ? 'translate-x-full opacity-0' : ''
+              swipeDirection === "left"
+                ? "-translate-x-full opacity-0"
+                : swipeDirection === "right"
+                  ? "translate-x-full opacity-0"
+                  : ""
             }`}
-            style={{ zIndex: 200 }}
           >
             <div className="h-full flex flex-col overflow-hidden">
               {/* Avatar + Header */}
@@ -187,8 +141,6 @@ export default function CandidatesPage() {
                     <p className="text-blue-100">{currentCandidate.headline}</p>
                   </div>
                 </div>
-
-                {/* Quick info */}
                 <div className="flex flex-wrap gap-3">
                   <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm">
                     <MapPin size={14} />
@@ -196,7 +148,10 @@ export default function CandidatesPage() {
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm">
                     <Euro size={14} />
-                    <span>€{currentCandidate.salary_min?.toLocaleString()} - €{currentCandidate.salary_max?.toLocaleString()}</span>
+                    <span>
+                      €{currentCandidate.salary_min?.toLocaleString()} - €
+                      {currentCandidate.salary_max?.toLocaleString()}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm capitalize">
                     <Briefcase size={14} />
@@ -207,17 +162,17 @@ export default function CandidatesPage() {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto p-8">
-                {/* Bio */}
                 <div className="mb-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">Bio</h3>
                   <p className="text-gray-700 leading-relaxed">
-                    {currentCandidate.bio || 'Nessuna bio disponibile.'}
+                    {currentCandidate.bio || "Nessuna bio disponibile."}
                   </p>
                 </div>
 
-                {/* Skills */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">Skills</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">
+                    Skills
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {currentCandidate.skills?.map((skill, i) => (
                       <span
@@ -234,23 +189,20 @@ export default function CandidatesPage() {
               {/* Action Buttons */}
               <div className="p-8 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-center gap-6">
-                  {/* Dislike */}
                   <button
-                    onClick={() => handleSwipe('left')}
+                    onClick={() => handleSwipe("left")}
                     className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
                   >
                     <X size={32} color="white" strokeWidth={3} />
                   </button>
 
-                  {/* Like */}
                   <button
-                    onClick={() => handleSwipe('right')}
+                    onClick={() => handleSwipe("right")}
                     className="w-20 h-20 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
                   >
                     <Heart size={36} color="white" strokeWidth={3} />
                   </button>
 
-                  {/* Super Like (future) */}
                   <button
                     disabled
                     className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center shadow-lg opacity-50 cursor-not-allowed"
@@ -266,14 +218,7 @@ export default function CandidatesPage() {
             </div>
           </div>
         </div>
-
-        {/* Hints */}
-        <div className="mt-8 text-center text-sm text-gray-600">
-          💡 <strong>Tip:</strong> Swipe right se il candidato ti interessa. Se anche lui ha swipato right su un tuo job, è MATCH!
-        </div>
       </div>
     </div>
   );
 }
-
-// ese
