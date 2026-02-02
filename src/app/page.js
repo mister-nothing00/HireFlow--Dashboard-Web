@@ -12,6 +12,7 @@ import {
   Star
 } from 'lucide-react';
 
+// ✅ Server Component (SSG per SEO)
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -19,10 +20,10 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
               <span className="text-2xl">🚀</span>
               <span className="text-xl font-bold text-gray-900">HireFlow</span>
-            </div>
+            </Link>
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-gray-600 hover:text-blue-600 transition">
                 Features
@@ -87,13 +88,13 @@ export default function LandingPage() {
                   Inizia Gratis
                   <ArrowRight size={20} />
                 </Link>
-                <Link 
+                <a 
                   href="#demo"
                   className="px-8 py-4 bg-white border-2 border-gray-300 text-gray-900 text-lg font-semibold rounded-lg hover:border-blue-600 hover:text-blue-600 transition flex items-center justify-center gap-2"
                 >
                   Guarda Demo
                   <span className="text-2xl">▶️</span>
-                </Link>
+                </a>
               </div>
 
               <div className="flex items-center gap-6 text-sm text-gray-600">
@@ -147,17 +148,17 @@ export default function LandingPage() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
+                  <div className="flex-1 py-3 bg-red-500 text-white rounded-lg font-semibold text-center">
                     ❌ Passa
-                  </button>
-                  <button className="flex-1 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition">
+                  </div>
+                  <div className="flex-1 py-3 bg-green-500 text-white rounded-lg font-semibold text-center">
                     ✅ Interessa
-                  </button>
+                  </div>
                 </div>
               </div>
 
               {/* Floating badges */}
-              <div className="absolute -top-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-bounce">
+              <div className="absolute -top-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-lg">
                 100% Match!
               </div>
             </div>
@@ -350,9 +351,9 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold mb-3">Prodotto</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Features</a></li>
-                <li><a href="#" className="hover:text-white">Prezzi</a></li>
-                <li><a href="#" className="hover:text-white">Demo</a></li>
+                <li><a href="#features" className="hover:text-white">Features</a></li>
+                <li><a href="#pricing" className="hover:text-white">Prezzi</a></li>
+                <li><a href="#demo" className="hover:text-white">Demo</a></li>
               </ul>
             </div>
             <div>
@@ -381,7 +382,7 @@ export default function LandingPage() {
   );
 }
 
-// ========== COMPONENTS ==========
+// ========== COMPONENTS (Server Components) ==========
 
 function StatCard({ number, label }) {
   return (

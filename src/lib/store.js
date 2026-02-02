@@ -14,14 +14,25 @@ export const useStore = create(
       },
       setUser: (user) => set({ user }),
       setCompany: (company) => set({ company }),
-      clearAuth: () => set({ 
-        user: null, 
-        company: null, 
-        jobs: [], 
-        candidates: [], 
-        matches: [],
-        messages: {},
-      }),
+      clearAuth: () => {
+        // Clear everything except settings
+        set({ 
+          user: null, 
+          company: null, 
+          jobs: [], 
+          candidates: [], 
+          matches: [],
+          messages: {},
+          currentCandidateIndex: 0,
+          stats: {
+            activeJobs: 0,
+            totalSwipes: 0,
+            totalMatches: 0,
+            activeChats: 0,
+          },
+        });
+        console.log('🗑️ Store cleared (logout)');
+      },
 
       // ========== JOBS STATE ==========
       jobs: [],
