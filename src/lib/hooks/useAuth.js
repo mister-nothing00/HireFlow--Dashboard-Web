@@ -6,28 +6,11 @@ import { useStore } from '../store';
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, setUser, clearAuth } = useStore();
+  const { user, setUser, company, setCompany, clearAuth } = useStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check sessione corrente
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          setUser(session.user);
-          console.log('✅ Session found:', session.user.email);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('❌ Session check error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    // Check sessione corrente all'avvio
     checkSession();
 
     // Subscribe to auth changes
@@ -37,10 +20,12 @@ export function useAuth() {
 
         if (event === 'SIGNED_IN' && session?.user) {
           setUser(session.user);
+          await fetchCompanyData(session.user.id);
           console.log('✅ User signed in:', session.user.email);
         } 
         else if (event === 'SIGNED_OUT') {
           setUser(null);
+          setCompany(null);
           clearAuth();
           console.log('🚪 User signed out');
         }
@@ -74,6 +59,57 @@ export function useAuth() {
     }
   }, [user, loading, pathname]);
 
+  const checkSession = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) throw error;
+
+      if (session?.user) {
+        setUser(session.user);
+        await fetchCompanyData(session.user.id);
+        console.log('✅ Session found:', session.user.email);
+      } else {
+        setUser(null);
+        setCompany(null);
+        console.log('ℹ️ No active session');
+      }
+    } catch (error) {
+      console.error('❌ Session check error:', error);
+      setUser(null);
+      setCompany(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCompanyData = async (userId) => {
+    try {
+      console.log('🔍 Fetching company data for user:', userId);
+
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('owner_id', userId)
+        .single();
+
+      if (error) {
+        // Se non ha company, è un nuovo utente che deve completare signup
+        console.warn('⚠️ No company found for user:', userId);
+        setCompany(null);
+        return;
+      }
+
+      if (data) {
+        setCompany(data);
+        console.log('✅ Company loaded:', data.name);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching company:', error);
+      setCompany(null);
+    }
+  };
+
   const logout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -89,6 +125,7 @@ export function useAuth() {
 
   return { 
     user, 
+    company,
     loading, 
     logout,
     isAuthenticated: !!user,

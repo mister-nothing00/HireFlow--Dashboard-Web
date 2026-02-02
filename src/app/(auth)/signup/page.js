@@ -18,7 +18,7 @@ const STEPS = [
 
 export default function SignupPage() {
   const router = useRouter();
-  const { company, setCompany } = useStore();
+  const { setCompany } = useStore();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -88,6 +88,8 @@ export default function SignupPage() {
     setError('');
 
     try {
+      console.log('🚀 Starting signup process...');
+
       // 1. Crea utente su Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -102,18 +104,18 @@ export default function SignupPage() {
 
       if (authError) throw authError;
 
-      console.log('✅ User created:', authData.user);
+      console.log('✅ User created:', authData.user.email);
 
-      // 2. Crea company su DB
+      // 2. Crea company su DB (collegata al nuovo user)
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .insert([{
+          owner_id: authData.user.id, // ✅ COLLEGAMENTO USER → COMPANY
           name: formData.companyName,
           website: formData.companyWebsite || null,
           location: formData.companyLocation,
           size: formData.companySize,
           industry: formData.industry || null,
-          // is_verified rimosso temporaneamente
         }])
         .select()
         .single();
@@ -123,12 +125,13 @@ export default function SignupPage() {
         throw companyError;
       }
 
-      console.log('✅ Company created:', companyData);
+      console.log('✅ Company created:', companyData.name);
 
       // 3. Salva company nello store globale
       setCompany(companyData);
 
       // 4. Redirect a dashboard
+      console.log('✅ Redirecting to dashboard...');
       router.push('/dashboard');
     } catch (err) {
       console.error('❌ Signup error:', err);
@@ -410,7 +413,7 @@ export default function SignupPage() {
                 <div>
                   <p className="font-semibold text-green-900">Tutto pronto!</p>
                   <p className="text-sm text-green-700 mt-1">
-                    Riceverai un'email di conferma. Clicca su "Crea Account" per iniziare.
+                    Clicca su "Crea Account" per iniziare.
                   </p>
                 </div>
               </div>

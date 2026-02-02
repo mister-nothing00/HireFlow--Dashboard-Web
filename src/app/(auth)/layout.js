@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 export default function AuthLayout({ children }) {
@@ -22,8 +24,6 @@ export default function AuthLayout({ children }) {
       <div className="relative w-full max-w-md">
         {children}
       </div>
-
-    
     </div>
   );
 }

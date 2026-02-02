@@ -6,12 +6,7 @@ export const useStore = create(
     (set, get) => ({
       // ========== USER & COMPANY STATE ==========
       user: null,
-      company: {
-        id: 'cdf8c6e0-8f89-4d3f-b123-456789abcdef', // Temporaneo finché non c'è auth
-        name: 'Tech Startup Inc.',
-        logo_url: '🏢',
-        location: 'Milano, IT',
-      },
+      company: null,
       setUser: (user) => set({ user }),
       setCompany: (company) => set({ company }),
       clearAuth: () => {
