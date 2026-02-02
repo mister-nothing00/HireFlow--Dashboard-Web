@@ -22,8 +22,7 @@
 .env.production.local
 
 
-# IDEs and editors
-.vscode/
+
 # next.js
 /.next/
 /out/
