@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
 
-export default function NewJobPage() {
+export default function EditJobPage() {
+  const params = useParams();
   const router = useRouter();
-  const { company } = useStore(); // ✅ Prendi company dallo store
-  const [loading, setLoading] = useState(false);
+  const { company } = useStore();
+  const jobId = params.id;
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
 
   // Form state
@@ -29,10 +33,60 @@ export default function NewJobPage() {
     experience_years_min: "",
   });
 
+  useEffect(() => {
+    if (jobId) {
+      fetchJob();
+    }
+  }, [jobId]);
+
+  const fetchJob = async () => {
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', jobId)
+        .single();
+
+      if (error) throw error;
+
+      // Verifica ownership
+      if (data.company_id !== company?.id) {
+        alert('❌ Non hai i permessi per modificare questo job');
+        router.push('/dashboard/jobs');
+        return;
+      }
+
+      // Popola il form con i dati esistenti
+      setFormData({
+        title: data.title || "",
+        description: data.description || "",
+        location: data.location || "",
+        remote_policy: data.remote_policy || "hybrid",
+        contract_type: data.contract_type || "full-time",
+        salary_min: data.salary_min || "",
+        salary_max: data.salary_max || "",
+        salary_currency: data.salary_currency || "EUR",
+        required_skills: data.required_skills?.join(', ') || "",
+        nice_to_have_skills: data.nice_to_have_skills?.join(', ') || "",
+        seniority: data.seniority || "mid",
+        experience_years_min: data.experience_years_min || "",
+      });
+
+      console.log('✅ Job loaded for editing:', data);
+    } catch (error) {
+      console.error('❌ Error fetching job:', error);
+      alert('Errore nel caricamento del job');
+      router.push('/dashboard/jobs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -52,7 +106,6 @@ export default function NewJobPage() {
     if (!formData.required_skills.trim())
       newErrors.required_skills = "Almeno una skill richiesta";
 
-    // Salary validation
     const salaryMin = parseInt(formData.salary_min);
     const salaryMax = parseInt(formData.salary_max);
 
@@ -76,17 +129,14 @@ export default function NewJobPage() {
       return;
     }
 
-    // ✅ Verifica che company esista
     if (!company?.id) {
       alert('❌ Errore: Company non trovata. Ricarica la pagina.');
-      console.error('No company in store:', company);
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
 
     try {
-      // Parse skills (comma separated)
       const requiredSkillsArray = formData.required_skills
         .split(',')
         .map(s => s.trim())
@@ -97,9 +147,7 @@ export default function NewJobPage() {
         .map(s => s.trim())
         .filter(Boolean);
 
-      // ✅ USA company.id dallo store
       const jobData = {
-        company_id: company.id, // ✅ DYNAMIC!
         title: formData.title.trim(),
         description: formData.description.trim(),
         location: formData.location.trim(),
@@ -112,60 +160,63 @@ export default function NewJobPage() {
         nice_to_have_skills: niceToHaveSkillsArray,
         seniority: formData.seniority,
         experience_years_min: formData.experience_years_min ? parseInt(formData.experience_years_min) : null,
-        is_active: true,
       };
 
-      console.log('🚀 Starting job creation...');
+      console.log('🚀 Updating job...');
       console.log('📦 Job data:', JSON.stringify(jobData, null, 2));
 
       const { data, error } = await supabase
         .from('jobs')
-        .insert([jobData])
+        .update(jobData)
+        .eq('id', jobId)
+        .eq('company_id', company.id) // Security check
         .select()
         .single();
 
-      console.log('📊 Supabase full response:', { data, error });
-      
       if (error) {
-        console.error('❌ Detailed error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          fullError: JSON.stringify(error, null, 2)
-        });
-        alert(`Errore Supabase: ${error.message || 'Unknown error'}\n\nDettagli: ${JSON.stringify(error, null, 2)}`);
+        console.error('❌ Update error:', error);
+        alert(`Errore Supabase: ${error.message}`);
         return;
       }
 
-      console.log('✅ Job created:', data);
-      alert('✅ Job pubblicato con successo!');
-      router.push('/dashboard/jobs');
+      console.log('✅ Job updated:', data);
+      alert('✅ Job aggiornato con successo!');
+      router.push(`/dashboard/jobs/${jobId}`);
     } catch (error) {
       console.error('❌ Catch error:', error);
-      console.error('Error stack:', error.stack);
-      alert('Errore nella pubblicazione del job. Controlla la console!');
+      alert('Errore nell\'aggiornamento del job. Controlla la console!');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Caricamento job...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <Link
-          href="/dashboard/jobs"
+          href={`/dashboard/jobs/${jobId}`}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
         >
           <ArrowLeft size={20} />
-          <span>Torna ai Jobs</span>
+          <span>Torna al Job</span>
         </Link>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Pubblica Nuovo Job
+          Modifica Job
         </h1>
         <p className="text-gray-600">
-          Compila tutti i campi per creare un annuncio trasparente
+          Aggiorna le informazioni del tuo annuncio
         </p>
       </div>
 
@@ -304,7 +355,7 @@ export default function NewJobPage() {
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">💰</span>
             <h3 className="text-lg font-bold text-gray-900">
-              Salary Range (Obbligatorio per Trasparenza!)
+              Salary Range
             </h3>
           </div>
 
@@ -370,11 +421,6 @@ export default function NewJobPage() {
               {errors.salary_min || errors.salary_max}
             </p>
           )}
-
-          <p className="mt-3 text-xs text-gray-600">
-            💡 <strong>Tip:</strong> Aziende con salary trasparente ricevono
-            1.5x più candidature!
-          </p>
         </div>
 
         {/* Skills */}
@@ -418,13 +464,20 @@ export default function NewJobPage() {
         <div className="flex items-center gap-4 pt-6 border-t">
           <button
             type="submit"
-            disabled={loading}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={saving}
+            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? "Pubblicazione..." : "Pubblica Job 🚀"}
+            {saving ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                <span>Salvataggio...</span>
+              </>
+            ) : (
+              <span>Salva Modifiche 💾</span>
+            )}
           </button>
           <Link
-            href="/dashboard/jobs"
+            href={`/dashboard/jobs/${jobId}`}
             className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold"
           >
             Annulla
