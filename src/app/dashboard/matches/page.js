@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   MessageCircle,
   Calendar,
@@ -11,110 +11,19 @@ import {
   Star,
 } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { useMatches } from "@/lib/hooks/useMatches";
 
 export default function MatchesPage() {
-  const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, new, contacted, hired
+  const { matches, stats, loading } = useMatches(); // ✅ Usa hook centralizzato
+  const [filter, setFilter] = useState("all");
 
-  // TODO: Replace with real company_id from auth
-  const COMPANY_ID = "cdf8c6e0-8f89-4d3f-b123-456789abcdef";
-
-  useEffect(() => {
-    fetchMatches();
-  }, []);
-
-  const fetchMatches = async () => {
-    try {
-      setLoading(true);
-
-      // 1. Fetch i nostri swipe RIGHT
-      const { data: ourSwipes, error: ourError } = await supabase
-        .from("company_swipes")
-        .select("candidate_id, created_at")
-        .eq("direction", "right");
-
-      if (ourError) throw ourError;
-
-      if (!ourSwipes || ourSwipes.length === 0) {
-        setMatches([]);
-        setLoading(false);
-        return;
-      }
-
-      const candidateIds = ourSwipes.map((s) => s.candidate_id);
-
-      // 2. Fetch candidati info
-      const { data: candidates, error: candidatesError } = await supabase
-        .from("candidates")
-        .select("*")
-        .in("id", candidateIds);
-
-      if (candidatesError) throw candidatesError;
-
-      // 3. Per ogni candidato, controlla se ha swipato RIGHT i nostri job
-      const matchesData = await Promise.all(
-        candidates.map(async (candidate) => {
-          const { data: theirSwipes } = await supabase
-            .from("swipes")
-            .select("job_id")
-            .eq("candidate_id", candidate.id)
-            .eq("direction", "right");
-
-          const hasMatch = theirSwipes && theirSwipes.length > 0;
-          const matchedJobId = hasMatch ? theirSwipes[0].job_id : null;
-
-          // Fetch job info se c'è match
-          let jobInfo = null;
-          if (matchedJobId) {
-            const { data: job } = await supabase
-              .from("jobs")
-              .select("title, location, salary_min, salary_max")
-              .eq("id", matchedJobId)
-              .single();
-            jobInfo = job;
-          }
-
-          return {
-            ...candidate,
-            hasMatch,
-            matchedJob: jobInfo,
-            swipedAt: ourSwipes.find((s) => s.candidate_id === candidate.id)
-              ?.created_at,
-            status: hasMatch ? "matched" : "interested",
-          };
-        }),
-      );
-
-      // Ordina: match prima, poi per data
-      const sorted = matchesData.sort((a, b) => {
-        if (a.hasMatch && !b.hasMatch) return -1;
-        if (!a.hasMatch && b.hasMatch) return 1;
-        return new Date(b.swipedAt) - new Date(a.swipedAt);
-      });
-
-      console.log("✅ Matches loaded:", sorted.length);
-      setMatches(sorted);
-    } catch (error) {
-      console.error("Error fetching matches:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Filtra i match in base al filtro selezionato
   const filteredMatches = matches.filter((match) => {
     if (filter === "all") return true;
     if (filter === "new") return match.hasMatch;
     if (filter === "interested") return !match.hasMatch;
     return true;
   });
-
-  const stats = {
-    total: matches.length,
-    matched: matches.filter((m) => m.hasMatch).length,
-    interested: matches.filter((m) => !m.hasMatch).length,
-  };
 
   if (loading) {
     return (
@@ -349,10 +258,13 @@ function MatchCard({ match }) {
           <div className="flex items-center gap-3">
             {match.hasMatch ? (
               <>
-                <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                <Link
+                  href={`/dashboard/chat`}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                >
                   <MessageCircle size={18} />
                   <span>Inizia Chat</span>
-                </button>
+                </Link>
                 <button className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-medium">
                   <Calendar size={18} />
                 </button>

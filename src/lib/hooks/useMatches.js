@@ -20,7 +20,7 @@ export function useMatches() {
     try {
       setMatchesLoading(true);
 
-      // 1. Fetch nostri swipe RIGHT
+      // 1. Fetch nostri swipe RIGHT con timestamp reale
       const { data: ourSwipes, error: ourError } = await supabase
         .from('company_swipes')
         .select('candidate_id, created_at')
@@ -44,18 +44,29 @@ export function useMatches() {
 
       if (candidatesError) throw candidatesError;
 
-      // 3. Check reciproci swipes
+      // 3. Fetch tutti i nostri job IDs per questa company
+      const { data: ourJobs } = await supabase
+        .from('jobs')
+        .select('id')
+        .eq('company_id', company.id);
+
+      const ourJobIds = ourJobs?.map(j => j.id) || [];
+
+      // 4. Check reciproci swipes solo sui nostri job
       const matchesData = await Promise.all(
         candidates.map(async (candidate) => {
+          // Cerca swipe right del candidato sui NOSTRI job
           const { data: theirSwipes } = await supabase
             .from('swipes')
             .select('job_id')
             .eq('candidate_id', candidate.id)
-            .eq('direction', 'right');
+            .eq('direction', 'right')
+            .in('job_id', ourJobIds.length > 0 ? ourJobIds : ['no-match']);
 
           const hasMatch = theirSwipes && theirSwipes.length > 0;
           const matchedJobId = hasMatch ? theirSwipes[0].job_id : null;
 
+          // Fetch job info se c'è match
           let jobInfo = null;
           if (matchedJobId) {
             const { data: job } = await supabase
@@ -66,16 +77,20 @@ export function useMatches() {
             jobInfo = job;
           }
 
+          // ✅ Prendi il timestamp REALE da ourSwipes
+          const swipeData = ourSwipes.find((s) => s.candidate_id === candidate.id);
+
           return {
             ...candidate,
             hasMatch,
             matchedJob: jobInfo,
-            swipedAt: ourSwipes.find((s) => s.candidate_id === candidate.id)?.created_at,
+            swipedAt: swipeData?.created_at, // ✅ Timestamp reale dal database
             status: hasMatch ? 'matched' : 'interested',
           };
         })
       );
 
+      // Ordina: match prima, poi per data
       const sorted = matchesData.sort((a, b) => {
         if (a.hasMatch && !b.hasMatch) return -1;
         if (!a.hasMatch && b.hasMatch) return 1;
