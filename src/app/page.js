@@ -1,15 +1,11 @@
 import Link from 'next/link';
 import { 
-  Briefcase, 
-  Users, 
-  MessageCircle, 
   TrendingUp,
   CheckCircle,
   Euro,
   Zap,
   Shield,
   ArrowRight,
-  Star
 } from 'lucide-react';
 
 // ✅ Server Component (SSG per SEO)
