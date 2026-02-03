@@ -11,9 +11,17 @@ export default function CandidatesPage() {
     useCandidates();
   const { company, addSwipe } = useStore();
   const [swipeDirection, setSwipeDirection] = useState(null);
+  const [swipeLoading, setSwipeLoading] = useState(false);
 
   const handleSwipe = async (direction) => {
-    if (!currentCandidate) return;
+    if (!currentCandidate || swipeLoading) return;
+
+    // Verifica che company exista
+    if (!company?.id) {
+      console.error('❌ Company non trovata nello store');
+      alert('Errore: Company non trovata. Ricarica la pagina.');
+      return;
+    }
 
     console.log(
       `${direction === "right" ? "✅" : "❌"} Swipe ${direction}:`,
@@ -21,6 +29,7 @@ export default function CandidatesPage() {
     );
 
     setSwipeDirection(direction);
+    setSwipeLoading(true);
 
     try {
       const { error } = await supabase.from("company_swipes").insert([
@@ -32,11 +41,17 @@ export default function CandidatesPage() {
       ]);
 
       if (error) {
-        console.error("Error saving swipe:", error);
+        // Se è un duplicato, non bloccare il flow
+        if (error.code === '23505') {
+          console.warn('⚠️ Swipe duplicato, skippando...');
+        } else {
+          console.error("❌ Error saving swipe:", error);
+        }
       } else {
         addSwipe(currentCandidate.id, direction);
       }
 
+      // Controlla match solo se swipe right
       if (direction === "right") {
         await checkForMatch(currentCandidate.id);
       }
@@ -44,19 +59,30 @@ export default function CandidatesPage() {
       console.error("Swipe error:", err);
     }
 
+    // Animazione poi passa al prossimo
     setTimeout(() => {
       setSwipeDirection(null);
+      setSwipeLoading(false);
       nextCandidate();
     }, 300);
   };
 
   const checkForMatch = async (candidateId) => {
     try {
+      // Cerca se il candidato ha swipato right su un nostro job
       const { data: candidateSwipes, error } = await supabase
         .from("swipes")
         .select("job_id")
         .eq("candidate_id", candidateId)
-        .eq("direction", "right");
+        .eq("direction", "right")
+        .in("job_id", 
+          // Cerca solo nei nostri job
+          await supabase
+            .from("jobs")
+            .select("id")
+            .eq("company_id", company.id)
+            .then(res => res.data?.map(j => j.id) || [])
+        );
 
       if (error) throw error;
 
@@ -113,6 +139,11 @@ export default function CandidatesPage() {
                 ? "profilo disponibile"
                 : "profili disponibili"}
             </p>
+          </div>
+          {/* Company badge */}
+          <div className="px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <p className="text-xs text-gray-500">Swipe come</p>
+            <p className="text-sm font-semibold text-gray-900">{company?.name || 'Company'}</p>
           </div>
         </div>
 
@@ -191,14 +222,16 @@ export default function CandidatesPage() {
                 <div className="flex items-center justify-center gap-6">
                   <button
                     onClick={() => handleSwipe("left")}
-                    className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+                    disabled={swipeLoading}
+                    className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <X size={32} color="white" strokeWidth={3} />
                   </button>
 
                   <button
                     onClick={() => handleSwipe("right")}
-                    className="w-20 h-20 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95"
+                    disabled={swipeLoading}
+                    className="w-20 h-20 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Heart size={36} color="white" strokeWidth={3} />
                   </button>
@@ -222,4 +255,3 @@ export default function CandidatesPage() {
     </div>
   );
 }
-//
