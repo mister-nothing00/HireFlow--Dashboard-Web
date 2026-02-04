@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useCandidates } from "@/lib/hooks/useCandidates";
 import { useStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
+import { showToast } from "@/lib/toast";
 
 export default function CandidatesPage() {
   const { currentCandidate, remainingCandidates, nextCandidate, loading } =
@@ -18,8 +19,8 @@ export default function CandidatesPage() {
 
     // Verifica che company exista
     if (!company?.id) {
-      console.error('❌ Company non trovata nello store');
-      alert('Errore: Company non trovata. Ricarica la pagina.');
+      console.error("❌ Company non trovata nello store");
+      showToast.error("Errore: Company non trovata. Ricarica la pagina.");
       return;
     }
 
@@ -42,8 +43,8 @@ export default function CandidatesPage() {
 
       if (error) {
         // Se è un duplicato, non bloccare il flow
-        if (error.code === '23505') {
-          console.warn('⚠️ Swipe duplicato, skippando...');
+        if (error.code === "23505") {
+          console.warn("⚠️ Swipe duplicato, skippando...");
         } else {
           console.error("❌ Error saving swipe:", error);
         }
@@ -75,20 +76,21 @@ export default function CandidatesPage() {
         .select("job_id")
         .eq("candidate_id", candidateId)
         .eq("direction", "right")
-        .in("job_id", 
+        .in(
+          "job_id",
           // Cerca solo nei nostri job
           await supabase
             .from("jobs")
             .select("id")
             .eq("company_id", company.id)
-            .then(res => res.data?.map(j => j.id) || [])
+            .then((res) => res.data?.map((j) => j.id) || []),
         );
 
       if (error) throw error;
 
       if (candidateSwipes && candidateSwipes.length > 0) {
         console.log("🎉 MATCH!");
-        alert(
+        showToast.success(
           "🎉 È un MATCH! Il candidato ha già swipato right su un tuo job!",
         );
       }
@@ -143,7 +145,9 @@ export default function CandidatesPage() {
           {/* Company badge */}
           <div className="px-4 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
             <p className="text-xs text-gray-500">Swipe come</p>
-            <p className="text-sm font-semibold text-gray-900">{company?.name || 'Company'}</p>
+            <p className="text-sm font-semibold text-gray-900">
+              {company?.name || "Company"}
+            </p>
           </div>
         </div>
 

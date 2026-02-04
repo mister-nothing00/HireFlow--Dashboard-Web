@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
+import { showToast } from "@/lib/toast";
 
 export default function CandidateProfilePage() {
   const params = useParams();
@@ -134,7 +135,9 @@ export default function CandidateProfilePage() {
 
       if (theirSwipes && theirSwipes.length > 0) {
         console.log("🎉 MATCH!");
-        alert("🎉 È un MATCH! Il candidato ha swipato right su un tuo job!");
+        showToast.success(
+          "🎉 È un MATCH! Il candidato ha swipato right su un tuo job!",
+        );
       }
     } catch (error) {
       console.error("Error checking match:", error);
@@ -203,9 +206,7 @@ export default function CandidateProfilePage() {
               <h1 className="text-3xl font-bold mb-1">
                 {candidate.first_name} {candidate.last_name}
               </h1>
-              <p className="text-blue-200 text-lg mb-4">
-                {candidate.headline}
-              </p>
+              <p className="text-blue-200 text-lg mb-4">{candidate.headline}</p>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-3">
@@ -216,13 +217,16 @@ export default function CandidateProfilePage() {
                 <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm">
                   <Euro size={14} />
                   <span>
-                    €{candidate.salary_min?.toLocaleString()} -
-                    €{candidate.salary_max?.toLocaleString()}
+                    €{candidate.salary_min?.toLocaleString()} - €
+                    {candidate.salary_max?.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm">
                   <Briefcase size={14} />
-                  <span>{getRemoteIcon(candidate.remote_preference)} {candidate.remote_preference}</span>
+                  <span>
+                    {getRemoteIcon(candidate.remote_preference)}{" "}
+                    {candidate.remote_preference}
+                  </span>
                 </div>
               </div>
             </div>
@@ -297,9 +301,7 @@ export default function CandidateProfilePage() {
 
         {/* Bio Card */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            🎯 About Me
-          </h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">🎯 About Me</h2>
           <p className="text-gray-700 leading-relaxed text-lg">
             {candidate.bio || "Nessuna bio disponibile."}
           </p>
@@ -307,9 +309,7 @@ export default function CandidateProfilePage() {
 
         {/* Skills Card */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            💻 Skills
-          </h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">💻 Skills</h2>
           <div className="flex flex-wrap gap-3">
             {candidate.skills?.map((skill, i) => (
               <span
@@ -324,9 +324,7 @@ export default function CandidateProfilePage() {
 
         {/* Details Card */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            📋 Dettagli
-          </h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">📋 Dettagli</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -334,7 +332,9 @@ export default function CandidateProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Location</p>
-                <p className="font-semibold text-gray-900">{candidate.location}</p>
+                <p className="font-semibold text-gray-900">
+                  {candidate.location}
+                </p>
               </div>
             </div>
 
@@ -345,7 +345,8 @@ export default function CandidateProfilePage() {
               <div>
                 <p className="text-sm text-gray-500">Salary Atteso</p>
                 <p className="font-semibold text-gray-900">
-                  €{candidate.salary_min?.toLocaleString()} - €{candidate.salary_max?.toLocaleString()}
+                  €{candidate.salary_min?.toLocaleString()} - €
+                  {candidate.salary_max?.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -357,7 +358,8 @@ export default function CandidateProfilePage() {
               <div>
                 <p className="text-sm text-gray-500">Preferenza</p>
                 <p className="font-semibold text-gray-900 capitalize">
-                  {getRemoteIcon(candidate.remote_preference)} {candidate.remote_preference}
+                  {getRemoteIcon(candidate.remote_preference)}{" "}
+                  {candidate.remote_preference}
                 </p>
               </div>
             </div>
@@ -368,9 +370,7 @@ export default function CandidateProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Stato</p>
-                <p className="font-semibold text-green-700">
-                  ✅ Attivo
-                </p>
+                <p className="font-semibold text-green-700">✅ Attivo</p>
               </div>
             </div>
           </div>
@@ -378,9 +378,7 @@ export default function CandidateProfilePage() {
 
         {/* Actions Card */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            ⚡ Azioni
-          </h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">⚡ Azioni</h2>
           <div className="flex flex-wrap gap-3">
             {swipeStatus === "right" && (
               <Link

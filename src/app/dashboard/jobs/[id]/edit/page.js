@@ -6,6 +6,7 @@ import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
+import { showToast } from "@/lib/toast";
 
 export default function EditJobPage() {
   const params = useParams();
@@ -53,7 +54,7 @@ export default function EditJobPage() {
 
       // Verifica ownership
       if (data.company_id !== company?.id) {
-        alert('❌ Non hai i permessi per modificare questo job');
+        showToast.error('❌ Non hai i permessi per modificare questo job');
         router.push('/dashboard/jobs');
         return;
       }
@@ -77,7 +78,7 @@ export default function EditJobPage() {
       console.log('✅ Job loaded for editing:', data);
     } catch (error) {
       console.error('❌ Error fetching job:', error);
-      alert('Errore nel caricamento del job');
+      showToast.error('Errore nel caricamento del job');
       router.push('/dashboard/jobs');
     } finally {
       setLoading(false);
@@ -130,7 +131,7 @@ export default function EditJobPage() {
     }
 
     if (!company?.id) {
-      alert('❌ Errore: Company non trovata. Ricarica la pagina.');
+      showToast.error('❌ Errore: Company non trovata. Ricarica la pagina.');
       return;
     }
 
@@ -175,16 +176,16 @@ export default function EditJobPage() {
 
       if (error) {
         console.error('❌ Update error:', error);
-        alert(`Errore Supabase: ${error.message}`);
+        showToast.error(`Errore Supabase: ${error.message}`);
         return;
       }
 
       console.log('✅ Job updated:', data);
-      alert('✅ Job aggiornato con successo!');
+      showToast.success('✅ Job aggiornato con successo!');
       router.push(`/dashboard/jobs/${jobId}`);
     } catch (error) {
       console.error('❌ Catch error:', error);
-      alert('Errore nell\'aggiornamento del job. Controlla la console!');
+      showToast.error('Errore nell\'aggiornamento del job. Controlla la console!');
     } finally {
       setSaving(false);
     }

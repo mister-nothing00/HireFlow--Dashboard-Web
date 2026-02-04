@@ -6,6 +6,7 @@ import { ArrowLeft, Send, MoreVertical, Phone, Video } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
+import { showToast } from "@/lib/toast";
 
 export default function ChatDetailPage() {
   const params = useParams();
@@ -145,7 +146,7 @@ export default function ChatDetailPage() {
       setNewMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Errore nell'invio del messaggio");
+      showToast.error("Errore nell'invio del messaggio");
     } finally {
       setSending(false);
     }

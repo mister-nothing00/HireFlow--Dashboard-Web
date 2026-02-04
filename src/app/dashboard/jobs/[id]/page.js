@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, Euro, Calendar, Edit2, Trash2, Users, Briefcase } fr
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useStore } from '@/lib/store';
+import { showToast } from '@/lib/toast';
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -40,7 +41,7 @@ export default function JobDetailPage() {
 
       // Verifica che il job appartenga alla company corrente
       if (data.company_id !== company?.id) {
-        alert('❌ Non hai i permessi per visualizzare questo job');
+        showToast.error('❌ Non hai i permessi per visualizzare questo job');
         router.push('/dashboard/jobs');
         return;
       }
@@ -49,7 +50,7 @@ export default function JobDetailPage() {
       setJob(data);
     } catch (error) {
       console.error('❌ Error fetching job:', error);
-      alert('Errore nel caricamento del job');
+      showToast.error('Errore nel caricamento del job');
       router.push('/dashboard/jobs');
     } finally {
       setLoading(false);
@@ -73,11 +74,11 @@ export default function JobDetailPage() {
       if (error) throw error;
 
       console.log('✅ Job deleted');
-      alert('✅ Job eliminato con successo');
+      showToast.success('✅ Job eliminato con successo');
       router.push('/dashboard/jobs');
     } catch (error) {
       console.error('❌ Error deleting job:', error);
-      alert('Errore nell\'eliminazione del job');
+      showToast.error('Errore nell\'eliminazione del job');
     } finally {
       setDeleting(false);
     }
@@ -99,7 +100,7 @@ export default function JobDetailPage() {
       console.log(`✅ Job ${newStatus ? 'attivato' : 'disattivato'}`);
     } catch (error) {
       console.error('❌ Error toggling job status:', error);
-      alert('Errore nel cambio di stato');
+      showToast.error('Errore nel cambio di stato');
     }
   };
 

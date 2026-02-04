@@ -14,7 +14,7 @@ export default function SettingsPage() {
     // TODO: Salvare settings su Supabase quando auth implementata
     await new Promise(resolve => setTimeout(resolve, 500)); // Mock delay
     setSaving(false);
-    alert('✅ Impostazioni salvate!');
+    showToast.success('✅ Impostazioni salvate!');
   };
 
   return (
