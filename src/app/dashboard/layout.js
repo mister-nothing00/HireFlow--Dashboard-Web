@@ -7,8 +7,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
-
+  const { logout, user, company } = useAuth();
   const navigation = [
     { name: 'Home', href: '/dashboard', icon: Home },
     { name: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
@@ -60,15 +59,17 @@ export default function DashboardLayout({ children }) {
           })}
         </nav>
 
-        {/* Company Info (bottom) */}
+        {/* Company Info (bottom) - ✅ ORA DINAMICO */}
         <div className="border-t border-gray-200 p-4">
           <div className="flex items-center gap-3 px-4 py-3 mb-2">
             <div className="text-2xl">🏢</div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">
-                Tech Startup Inc.
+                {company?.name || 'Company'}
               </p>
-              <p className="text-xs text-gray-500">Milano, IT</p>
+              <p className="text-xs text-gray-500">
+                {company?.location || 'Location'}
+              </p>
             </div>
           </div>
           <button 
