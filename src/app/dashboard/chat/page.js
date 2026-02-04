@@ -4,17 +4,19 @@ import { useState, useEffect } from 'react';
 import { MessageCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { useStore } from '@/lib/store';
 
 export default function ChatListPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const COMPANY_ID = 'cdf8c6e0-8f89-4d3f-b123-456789abcdef';
+  const { company } = useStore();
 
   useEffect(() => {
-    fetchMatches();
-  }, []);
+    if (company?.id) {
+      fetchMatches();
+    }
+  }, [company?.id]);
 
   const fetchMatches = async () => {
     try {
@@ -27,7 +29,7 @@ export default function ChatListPage() {
           candidate:candidates(id, first_name, last_name, headline, avatar_url),
           job:jobs(id, title)
         `)
-        .eq('company_id', COMPANY_ID)
+        .eq('company_id', company.id) // ✅ Dinamico
         .order('last_message_at', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
@@ -40,6 +42,46 @@ export default function ChatListPage() {
       setLoading(false);
     }
   };
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!company?.id) return;
+
+    const channel = supabase
+      .channel('chat-list-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches',
+          filter: `company_id=eq.${company.id}`,
+        },
+        () => {
+          console.log('🔔 Chat list update detected');
+          fetchMatches();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        () => {
+          console.log('🔔 New message detected');
+          fetchMatches();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Chat list subscription:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [company?.id]);
 
   const filteredMatches = matches.filter(match => {
     if (!searchQuery) return true;
@@ -70,6 +112,7 @@ export default function ChatListPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+        <div className="sr-only">Caricamento chat...</div>
       </div>
     );
   }
@@ -104,8 +147,14 @@ export default function ChatListPage() {
                 Nessuna chat ancora
               </h3>
               <p className="text-gray-600 text-sm">
-                I tuoi match appariranno qui
+                I tuoi match appariranno qui. Vai a swipare i candidati!
               </p>
+              <Link 
+                href="/dashboard/candidates"
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold"
+              >
+                Swipe Candidati
+              </Link>
             </div>
           ) : (
             filteredMatches.map((match) => (

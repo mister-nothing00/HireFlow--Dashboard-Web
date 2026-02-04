@@ -5,11 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Send, MoreVertical, Phone, Video } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useStore } from "@/lib/store";
 
 export default function ChatDetailPage() {
   const params = useParams();
   const router = useRouter();
   const matchId = params.id;
+  const { company, user } = useStore(); // ✅ Usa company e user dallo store
 
   const [match, setMatch] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -18,12 +20,11 @@ export default function ChatDetailPage() {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const COMPANY_ID = "cdf8c6e0-8f89-4d3f-b123-456789abcdef";
-
   useEffect(() => {
     if (matchId) {
       fetchMatchAndMessages();
-      subscribeToMessages();
+      const unsubscribe = subscribeToMessages();
+      return unsubscribe;
     }
   }, [matchId]);
 
@@ -49,6 +50,14 @@ export default function ChatDetailPage() {
         .single();
 
       if (matchError) throw matchError;
+
+      // Verifica che la match appartenga alla nostra company
+      if (matchData.company_id !== company?.id) {
+        console.error('❌ Match non appartiene alla tua company');
+        router.push('/dashboard/chat');
+        return;
+      }
+
       setMatch(matchData);
 
       // Fetch messages
@@ -82,7 +91,12 @@ export default function ChatDetailPage() {
         },
         (payload) => {
           console.log("📨 New message received:", payload.new);
-          setMessages((prev) => [...prev, payload.new]);
+          // Evita duplicati
+          setMessages((prev) => {
+            const exists = prev.find(m => m.id === payload.new.id);
+            if (exists) return prev;
+            return [...prev, payload.new];
+          });
         },
       )
       .subscribe();
@@ -95,14 +109,14 @@ export default function ChatDetailPage() {
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !company?.id) return;
 
     setSending(true);
 
     try {
       const messageData = {
         match_id: matchId,
-        sender_id: COMPANY_ID,
+        sender_id: company.id, // ✅ Dinamico
         sender_type: "company",
         content: newMessage.trim(),
       };
@@ -114,6 +128,9 @@ export default function ChatDetailPage() {
         .single();
 
       if (error) throw error;
+
+      // Aggiungi messaggio localmente subito
+      setMessages((prev) => [...prev, data]);
 
       // Update match last_message
       await supabase
@@ -145,21 +162,14 @@ export default function ChatDetailPage() {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
 
-    // Se meno di 1 minuto fa
     if (diffMins < 1) return "Ora";
-
-    // Se meno di 1 ora fa
     if (diffMins < 60) return `${diffMins}min fa`;
-
-    // Se oggi
     if (diffHours < 24) {
       return date.toLocaleTimeString("it-IT", {
         hour: "2-digit",
         minute: "2-digit",
       });
     }
-
-    // Se più vecchio, mostra data
     return date.toLocaleDateString("it-IT", {
       day: "numeric",
       month: "short",
@@ -234,7 +244,7 @@ export default function ChatDetailPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
         <div className="max-w-4xl mx-auto space-y-4">
-          {/* Match info */}
+          {/* Match info banner */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
             <p className="text-sm text-blue-900">
               🎉 Hai un match con <strong>{match.candidate?.first_name}</strong>{" "}
