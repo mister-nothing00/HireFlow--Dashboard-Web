@@ -6,10 +6,11 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
+import { showToast } from "@/lib/toast";
 
 export default function NewJobPage() {
   const router = useRouter();
-  const { company } = useStore(); // ✅ Prendi company dallo store
+  const { company } = useStore();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -32,7 +33,6 @@ export default function NewJobPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user types
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -52,7 +52,6 @@ export default function NewJobPage() {
     if (!formData.required_skills.trim())
       newErrors.required_skills = "Almeno una skill richiesta";
 
-    // Salary validation
     const salaryMin = parseInt(formData.salary_min);
     const salaryMax = parseInt(formData.salary_max);
 
@@ -68,87 +67,84 @@ export default function NewJobPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validate()) {
-      console.log('❌ Validation failed:', errors);
-      return;
-    }
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // ✅ Verifica che company esista
-    if (!company?.id) {
-      alert('❌ Errore: Company non trovata. Ricarica la pagina.');
-      console.error('No company in store:', company);
-      return;
-    }
+  if (!validate()) {
+    console.log("❌ Validation failed:", errors);
+    return;
+  }
 
-    setLoading(true);
+  if (!company?.id) {
+    showToast.error("Errore: Company non trovata. Ricarica la pagina.");
+    return;
+  }
 
-    try {
-      // Parse skills (comma separated)
-      const requiredSkillsArray = formData.required_skills
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+  setLoading(true);
 
-      const niceToHaveSkillsArray = formData.nice_to_have_skills
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+  try {
+    const requiredSkillsArray = formData.required_skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-      // ✅ USA company.id dallo store
-      const jobData = {
-        company_id: company.id, // ✅ DYNAMIC!
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        location: formData.location.trim(),
-        remote_policy: formData.remote_policy,
-        contract_type: formData.contract_type,
-        salary_min: parseInt(formData.salary_min),
-        salary_max: parseInt(formData.salary_max),
-        salary_currency: formData.salary_currency,
-        required_skills: requiredSkillsArray,
-        nice_to_have_skills: niceToHaveSkillsArray,
-        seniority: formData.seniority,
-        experience_years_min: formData.experience_years_min ? parseInt(formData.experience_years_min) : null,
-        is_active: true,
-      };
+    const niceToHaveSkillsArray = formData.nice_to_have_skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
-      console.log('🚀 Starting job creation...');
-      console.log('📦 Job data:', JSON.stringify(jobData, null, 2));
+    const jobData = {
+      company_id: company.id,
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      location: formData.location.trim(),
+      remote_policy: formData.remote_policy,
+      contract_type: formData.contract_type,
+      salary_min: parseInt(formData.salary_min),
+      salary_max: parseInt(formData.salary_max),
+      salary_currency: formData.salary_currency,
+      required_skills: requiredSkillsArray,
+      nice_to_have_skills: niceToHaveSkillsArray,
+      seniority: formData.seniority,
+      experience_years_min: formData.experience_years_min
+        ? parseInt(formData.experience_years_min)
+        : null,
+      is_active: true,
+    };
 
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert([jobData])
-        .select()
-        .single();
+    console.log("🚀 Creating job...");
+    console.log("📦 Job data:", JSON.stringify(jobData, null, 2));
 
-      console.log('📊 Supabase full response:', { data, error });
-      
-      if (error) {
-        console.error('❌ Detailed error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code,
-          fullError: JSON.stringify(error, null, 2)
-        });
-        alert(`Errore Supabase: ${error.message || 'Unknown error'}\n\nDettagli: ${JSON.stringify(error, null, 2)}`);
-        return;
-      }
+    console.log("⏳ BEFORE Supabase call..."); // ← NUOVO
 
-      console.log('✅ Job created:', data);
-      alert('✅ Job pubblicato con successo!');
-      router.push('/dashboard/jobs');
-    } catch (error) {
-      console.error('❌ Catch error:', error);
-      console.error('Error stack:', error.stack);
-      alert('Errore nella pubblicazione del job. Controlla la console!');
-    } finally {
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert([jobData])
+      .select()
+      .single();
+
+    console.log("✅ AFTER Supabase call"); // ← NUOVO
+    console.log("📡 Supabase response - data:", data);
+    console.log("📡 Supabase response - error:", error);
+
+    if (error) {
+      console.error("❌ Supabase error:", error);
+      showToast.error(`Errore Supabase: ${error.message}\n\nDettagli: ${JSON.stringify(error, null, 2)}`);
       setLoading(false);
+      return;
     }
-  };
+
+    console.log("✅ Job created successfully:", data);
+    showToast.success("✅ JOB CREATO!");
+    router.push("/dashboard/jobs");
+  } catch (error) {
+    console.error("❌ CATCH ERROR:", error);
+    console.error("❌ Error stack:", error.stack); // ← NUOVO
+    showToast.error(`CATCH ERROR: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
