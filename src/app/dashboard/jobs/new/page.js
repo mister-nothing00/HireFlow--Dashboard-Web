@@ -1,12 +1,11 @@
-"use client";
+'use client'; // ← CRITICO: QUESTA RIGA DEVE ESSERE LA PRIMA!
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
-import { showToast } from "@/lib/toast";
 
 export default function NewJobPage() {
   const router = useRouter();
@@ -14,7 +13,6 @@ export default function NewJobPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Form state
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -42,15 +40,11 @@ export default function NewJobPage() {
     const newErrors = {};
 
     if (!formData.title.trim()) newErrors.title = "Titolo obbligatorio";
-    if (!formData.description.trim())
-      newErrors.description = "Descrizione obbligatoria";
+    if (!formData.description.trim()) newErrors.description = "Descrizione obbligatoria";
     if (!formData.location.trim()) newErrors.location = "Location obbligatoria";
-    if (!formData.salary_min)
-      newErrors.salary_min = "Salary minimo obbligatorio";
-    if (!formData.salary_max)
-      newErrors.salary_max = "Salary massimo obbligatorio";
-    if (!formData.required_skills.trim())
-      newErrors.required_skills = "Almeno una skill richiesta";
+    if (!formData.salary_min) newErrors.salary_min = "Salary minimo obbligatorio";
+    if (!formData.salary_max) newErrors.salary_max = "Salary massimo obbligatorio";
+    if (!formData.required_skills.trim()) newErrors.required_skills = "Almeno una skill richiesta";
 
     const salaryMin = parseInt(formData.salary_min);
     const salaryMax = parseInt(formData.salary_max);
@@ -67,88 +61,81 @@ export default function NewJobPage() {
     return Object.keys(newErrors).length === 0;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validate()) {
-    console.log("❌ Validation failed:", errors);
-    return;
-  }
-
-  if (!company?.id) {
-    showToast.error("Errore: Company non trovata. Ricarica la pagina.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const requiredSkillsArray = formData.required_skills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const niceToHaveSkillsArray = formData.nice_to_have_skills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const jobData = {
-      company_id: company.id,
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      location: formData.location.trim(),
-      remote_policy: formData.remote_policy,
-      contract_type: formData.contract_type,
-      salary_min: parseInt(formData.salary_min),
-      salary_max: parseInt(formData.salary_max),
-      salary_currency: formData.salary_currency,
-      required_skills: requiredSkillsArray,
-      nice_to_have_skills: niceToHaveSkillsArray,
-      seniority: formData.seniority,
-      experience_years_min: formData.experience_years_min
-        ? parseInt(formData.experience_years_min)
-        : null,
-      is_active: true,
-    };
-
-    console.log("🚀 Creating job...");
-    console.log("📦 Job data:", JSON.stringify(jobData, null, 2));
-
-    console.log("⏳ BEFORE Supabase call..."); // ← NUOVO
-
-    const { data, error } = await supabase
-      .from("jobs")
-      .insert([jobData])
-      .select()
-      .single();
-
-    console.log("✅ AFTER Supabase call"); // ← NUOVO
-    console.log("📡 Supabase response - data:", data);
-    console.log("📡 Supabase response - error:", error);
-
-    if (error) {
-      console.error("❌ Supabase error:", error);
-      showToast.error(`Errore Supabase: ${error.message}\n\nDettagli: ${JSON.stringify(error, null, 2)}`);
-      setLoading(false);
+    if (!validate()) {
+      console.log("❌ Validation failed");
+      alert("Compila correttamente tutti i campi obbligatori");
       return;
     }
 
-    console.log("✅ Job created successfully:", data);
-    showToast.success("✅ JOB CREATO!");
-    router.push("/dashboard/jobs");
-  } catch (error) {
-    console.error("❌ CATCH ERROR:", error);
-    console.error("❌ Error stack:", error.stack); // ← NUOVO
-    showToast.error(`CATCH ERROR: ${error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+    if (!company?.id) {
+      alert("Errore: Company non trovata. Ricarica la pagina.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const requiredSkillsArray = formData.required_skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const niceToHaveSkillsArray = formData.nice_to_have_skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const jobData = {
+        company_id: company.id,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        location: formData.location.trim(),
+        remote_policy: formData.remote_policy,
+        contract_type: formData.contract_type,
+        salary_min: parseInt(formData.salary_min),
+        salary_max: parseInt(formData.salary_max),
+        salary_currency: formData.salary_currency,
+        required_skills: requiredSkillsArray,
+        nice_to_have_skills: niceToHaveSkillsArray,
+        seniority: formData.seniority,
+        experience_years_min: formData.experience_years_min
+          ? parseInt(formData.experience_years_min)
+          : null,
+        is_active: true,
+      };
+
+      console.log("🚀 Creating job...");
+      console.log("📦 Job data:", jobData);
+
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert([jobData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("❌ Supabase error:", error);
+        alert(`Errore: ${error.message}`);
+        return;
+      }
+
+      console.log("✅ Job created:", data);
+      alert("✅ Job pubblicato con successo!");
+      router.push("/dashboard/jobs");
+      
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert(`Errore: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <Link
           href="/dashboard/jobs"
@@ -165,11 +152,7 @@ export default function NewJobPage() {
         </p>
       </div>
 
-      {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl border border-gray-200 p-8 space-y-6"
-      >
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-6">
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -180,7 +163,7 @@ export default function NewJobPage() {
             name="title"
             value={formData.title}
             onChange={handleChange}
-            placeholder="es. Frontend Developer, UX Designer..."
+            placeholder="Frontend Developer"
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
               errors.title ? "border-red-500" : "border-gray-300"
             }`}
@@ -203,7 +186,7 @@ export default function NewJobPage() {
             value={formData.description}
             onChange={handleChange}
             rows={6}
-            placeholder="Descrivi il ruolo, le responsabilità, cosa offrite..."
+            placeholder="Descrivi il ruolo e le responsabilita"
             className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none ${
               errors.description ? "border-red-500" : "border-gray-300"
             }`}
@@ -216,7 +199,7 @@ export default function NewJobPage() {
           )}
         </div>
 
-        {/* Location + Remote Policy */}
+        {/* Location + Remote */}
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -227,17 +210,11 @@ export default function NewJobPage() {
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="es. Milano, Roma, Remote..."
+              placeholder="Milano, Italia"
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
                 errors.location ? "border-red-500" : "border-gray-300"
               }`}
             />
-            {errors.location && (
-              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle size={14} />
-                {errors.location}
-              </p>
-            )}
           </div>
 
           <div>
@@ -248,16 +225,16 @@ export default function NewJobPage() {
               name="remote_policy"
               value={formData.remote_policy}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             >
-              <option value="remote">🏠 Full Remote</option>
-              <option value="hybrid">🔀 Ibrido</option>
-              <option value="onsite">🏢 In Sede</option>
+              <option value="remote">Full Remote</option>
+              <option value="hybrid">Ibrido</option>
+              <option value="onsite">In Sede</option>
             </select>
           </div>
         </div>
 
-        {/* Contract Type + Seniority */}
+        {/* Contract + Seniority */}
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -267,7 +244,7 @@ export default function NewJobPage() {
               name="contract_type"
               value={formData.contract_type}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="full-time">Full-time</option>
               <option value="part-time">Part-time</option>
@@ -284,30 +261,25 @@ export default function NewJobPage() {
               name="seniority"
               value={formData.seniority}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             >
-              <option value="junior">Junior (0-2 anni)</option>
-              <option value="mid">Mid (3-5 anni)</option>
-              <option value="senior">Senior (5+ anni)</option>
-              <option value="lead">Lead / Principal</option>
+              <option value="junior">Junior</option>
+              <option value="mid">Mid</option>
+              <option value="senior">Senior</option>
+              <option value="lead">Lead</option>
               <option value="executive">Executive</option>
             </select>
           </div>
         </div>
 
-        {/* Salary Range */}
+        {/* Salary */}
         <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">💰</span>
-            <h3 className="text-lg font-bold text-gray-900">
-              Salary Range (Obbligatorio per Trasparenza!)
-            </h3>
-          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Salary Range *</h3>
 
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Minimo (€) *
+                Minimo
               </label>
               <input
                 type="number"
@@ -318,7 +290,7 @@ export default function NewJobPage() {
                 min="10000"
                 max="500000"
                 step="1000"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${
                   errors.salary_min ? "border-red-500" : "border-gray-300"
                 }`}
               />
@@ -326,7 +298,7 @@ export default function NewJobPage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Massimo (€) *
+                Massimo
               </label>
               <input
                 type="number"
@@ -337,7 +309,7 @@ export default function NewJobPage() {
                 min="10000"
                 max="500000"
                 step="1000"
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${
                   errors.salary_max ? "border-red-500" : "border-gray-300"
                 }`}
               />
@@ -351,26 +323,20 @@ export default function NewJobPage() {
                 name="salary_currency"
                 value={formData.salary_currency}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
               >
-                <option value="EUR">EUR (€)</option>
-                <option value="USD">USD ($)</option>
-                <option value="GBP">GBP (£)</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
               </select>
             </div>
           </div>
 
           {(errors.salary_min || errors.salary_max) && (
-            <p className="mt-3 text-sm text-red-600 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className="mt-3 text-sm text-red-600">
               {errors.salary_min || errors.salary_max}
             </p>
           )}
-
-          <p className="mt-3 text-xs text-gray-600">
-            💡 <strong>Tip:</strong> Aziende con salary trasparente ricevono
-            1.5x più candidature!
-          </p>
         </div>
 
         {/* Skills */}
@@ -383,41 +349,42 @@ export default function NewJobPage() {
             name="required_skills"
             value={formData.required_skills}
             onChange={handleChange}
-            placeholder="React, TypeScript, Node.js (separati da virgola)"
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition ${
+            placeholder="React, JavaScript, CSS"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${
               errors.required_skills ? "border-red-500" : "border-gray-300"
             }`}
           />
-          {errors.required_skills && (
-            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-              <AlertCircle size={14} />
-              {errors.required_skills}
-            </p>
-          )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Skills Nice-to-Have (Opzionale)
+            Skills Nice-to-Have
           </label>
           <input
             type="text"
             name="nice_to_have_skills"
             value={formData.nice_to_have_skills}
             onChange={handleChange}
-            placeholder="GraphQL, Docker, AWS (separati da virgola)"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            placeholder="TypeScript, Next.js"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
 
-        {/* Submit Buttons */}
+        {/* Submit */}
         <div className="flex items-center gap-4 pt-6 border-t">
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading ? "Pubblicazione..." : "Pubblica Job 🚀"}
+            {loading ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                <span>Pubblicazione...</span>
+              </>
+            ) : (
+              "Pubblica Job"
+            )}
           </button>
           <Link
             href="/dashboard/jobs"

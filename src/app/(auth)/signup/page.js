@@ -1,61 +1,70 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { 
-  Mail, Lock, User, Building2, MapPin, Users, 
-  ArrowRight, ArrowLeft, Check, AlertCircle, Loader2 
-} from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useStore } from '@/lib/store';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Mail,
+  Lock,
+  User,
+  Building2,
+  MapPin,
+  Users,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useStore } from "@/lib/store";
 
 const STEPS = [
-  { id: 1, name: 'Account', icon: User },
-  { id: 2, name: 'Azienda', icon: Building2 },
-  { id: 3, name: 'Conferma', icon: Check },
+  { id: 1, name: "Account", icon: User },
+  { id: 2, name: "Azienda", icon: Building2 },
+  { id: 3, name: "Conferma", icon: Check },
 ];
 
 export default function SignupPage() {
   const router = useRouter();
   const { setCompany } = useStore();
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Form state consolidato
   const [formData, setFormData] = useState({
     // Step 1: Account
-    email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+
     // Step 2: Azienda
-    companyName: '',
-    companyWebsite: '',
-    companyLocation: '',
-    companySize: '11-50',
-    industry: '',
+    companyName: "",
+    companyWebsite: "",
+    companyLocation: "",
+    companySize: "11-50",
+    industry: "",
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    setError("");
   };
 
   const validateStep1 = () => {
     if (!formData.email || !formData.password || !formData.fullName) {
-      setError('Compila tutti i campi obbligatori');
+      setError("Compila tutti i campi obbligatori");
       return false;
     }
     if (formData.password.length < 8) {
-      setError('La password deve essere di almeno 8 caratteri');
+      setError("La password deve essere di almeno 8 caratteri");
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError('Le password non corrispondono');
+      setError("Le password non corrispondono");
       return false;
     }
     return true;
@@ -63,7 +72,7 @@ export default function SignupPage() {
 
   const validateStep2 = () => {
     if (!formData.companyName || !formData.companyLocation) {
-      setError('Compila almeno Nome azienda e Location');
+      setError("Compila almeno Nome azienda e Location");
       return false;
     }
     return true;
@@ -72,23 +81,23 @@ export default function SignupPage() {
   const handleNextStep = () => {
     if (currentStep === 1 && !validateStep1()) return;
     if (currentStep === 2 && !validateStep2()) return;
-    
+
     setCurrentStep(currentStep + 1);
-    setError('');
+    setError("");
   };
 
   const handlePrevStep = () => {
     setCurrentStep(currentStep - 1);
-    setError('');
+    setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
-      console.log('🚀 Starting signup process...');
+      console.log("🚀 Starting signup process...");
 
       // 1. Crea utente su Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -97,45 +106,47 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: formData.fullName,
-            role: 'recruiter',
+            role: "recruiter",
           },
         },
       });
 
       if (authError) throw authError;
 
-      console.log('✅ User created:', authData.user.email);
+      console.log("✅ User created:", authData.user.email);
 
       // 2. Crea company su DB (collegata al nuovo user)
       const { data: companyData, error: companyError } = await supabase
-        .from('companies')
-        .insert([{
-          owner_id: authData.user.id, // ✅ COLLEGAMENTO USER → COMPANY
-          name: formData.companyName,
-          website: formData.companyWebsite || null,
-          location: formData.companyLocation,
-          size: formData.companySize,
-          industry: formData.industry || null,
-        }])
+        .from("companies")
+        .insert([
+          {
+            owner_id: authData.user.id,
+            name: formData.companyName,
+            website: formData.companyWebsite || null,
+            location: formData.companyLocation,
+            size: formData.companySize,
+            industry: formData.industry || null,
+          },
+        ])
         .select()
         .single();
 
       if (companyError) {
-        console.error('❌ Company creation error:', companyError);
+        console.error("❌ Company creation error:", companyError);
         throw companyError;
       }
 
-      console.log('✅ Company created:', companyData.name);
+      console.log("✅ Company created:", companyData.name);
 
       // 3. Salva company nello store globale
       setCompany(companyData);
 
       // 4. Redirect a dashboard
-      console.log('✅ Redirecting to dashboard...');
-      router.push('/dashboard');
+      console.log("✅ Redirecting to dashboard...");
+      router.push("/dashboard");
     } catch (err) {
-      console.error('❌ Signup error:', err);
-      setError(err.message || 'Errore durante la registrazione');
+      console.error("❌ Signup error:", err);
+      setError(err.message || "Errore durante la registrazione");
     } finally {
       setLoading(false);
     }
@@ -145,6 +156,7 @@ export default function SignupPage() {
     <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
       {/* Progress Steps */}
       <div className="mb-8">
+        {/* Step Circles con linee */}
         <div className="flex items-center justify-between">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
@@ -154,37 +166,40 @@ export default function SignupPage() {
             return (
               <div key={step.id} className="flex items-center flex-1">
                 {/* Step Circle */}
-                <div className={`
-                  flex items-center justify-center w-12 h-12 rounded-full transition-all
-                  ${isCompleted ? 'bg-green-500 text-white' : ''}
-                  ${isActive ? 'bg-blue-600 text-white ring-4 ring-blue-600/20' : ''}
-                  ${!isActive && !isCompleted ? 'bg-gray-200 text-gray-500' : ''}
-                `}>
-                  {isCompleted ? <Check size={24} /> : <Icon size={24} />}
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`
+              flex items-center justify-center w-12 h-12 rounded-full transition-all
+              ${isCompleted ? "bg-green-500 text-white" : ""}
+              ${isActive ? "bg-blue-600 text-white ring-4 ring-blue-600/20" : ""}
+              ${!isActive && !isCompleted ? "bg-gray-200 text-gray-500" : ""}
+            `}
+                  >
+                    {isCompleted ? <Check size={24} /> : <Icon size={24} />}
+                  </div>
+
+                  {/* Nome Step */}
+                  <p
+                    className={`text-sm font-medium mt-3 ${
+                      currentStep >= step.id ? "text-gray-900" : "text-gray-500"
+                    }`}
+                  >
+                    {step.name}
+                  </p>
                 </div>
 
-                {/* Line */}
+                {/* Line tra gli step (non dopo l'ultimo) */}
                 {index < STEPS.length - 1 && (
-                  <div className={`
-                    flex-1 h-1 mx-2 transition-all
-                    ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}
-                  `} />
+                  <div
+                    className={`
+              h-1 w-full mx-4 -mt-6 transition-all
+              ${isCompleted ? "bg-green-500" : "bg-gray-200"}
+            `}
+                  />
                 )}
               </div>
             );
           })}
-        </div>
-
-        <div className="flex justify-between mt-3">
-          {STEPS.map((step) => (
-            <div key={step.id} className="flex-1 text-center">
-              <p className={`text-sm font-medium ${
-                currentStep >= step.id ? 'text-gray-900' : 'text-gray-500'
-              }`}>
-                {step.name}
-              </p>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -194,21 +209,24 @@ export default function SignupPage() {
           <span className="text-3xl">🚀</span>
         </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {currentStep === 1 && 'Crea il tuo account'}
-          {currentStep === 2 && 'Informazioni azienda'}
-          {currentStep === 3 && 'Conferma e inizia'}
+          {currentStep === 1 && "Crea il tuo account"}
+          {currentStep === 2 && "Informazioni azienda"}
+          {currentStep === 3 && "Conferma e inizia"}
         </h1>
         <p className="text-gray-600">
-          {currentStep === 1 && 'Inizia a trovare i candidati perfetti'}
-          {currentStep === 2 && 'Aiutaci a conoscerti meglio'}
-          {currentStep === 3 && 'Sei pronto per rivoluzionare il recruiting'}
+          {currentStep === 1 && "Inizia a trovare i candidati perfetti"}
+          {currentStep === 2 && "Aiutaci a conoscerti meglio"}
+          {currentStep === 3 && "Sei pronto per rivoluzionare il recruiting"}
         </p>
       </div>
 
       {/* Error Alert */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-          <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+          <AlertCircle
+            className="text-red-600 flex-shrink-0 mt-0.5"
+            size={20}
+          />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
@@ -223,7 +241,10 @@ export default function SignupPage() {
                 Nome completo
               </label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <User
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="text"
                   name="fullName"
@@ -241,7 +262,10 @@ export default function SignupPage() {
                 Email aziendale
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Mail
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="email"
                   name="email"
@@ -259,7 +283,10 @@ export default function SignupPage() {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Lock
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="password"
                   name="password"
@@ -277,7 +304,10 @@ export default function SignupPage() {
                 Conferma password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Lock
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="password"
                   name="confirmPassword"
@@ -300,7 +330,10 @@ export default function SignupPage() {
                 Nome azienda *
               </label>
               <div className="relative">
-                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Building2
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="text"
                   name="companyName"
@@ -332,7 +365,10 @@ export default function SignupPage() {
                 Location *
               </label>
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <MapPin
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="text"
                   name="companyLocation"
@@ -350,7 +386,10 @@ export default function SignupPage() {
                 Dimensione azienda
               </label>
               <div className="relative">
-                <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Users
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <select
                   name="companySize"
                   value={formData.companySize}
@@ -386,23 +425,33 @@ export default function SignupPage() {
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Riepilogo Account</h3>
+              <h3 className="font-bold text-gray-900 mb-4">
+                Riepilogo Account
+              </h3>
               <dl className="space-y-3">
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Nome</dt>
-                  <dd className="font-semibold text-gray-900">{formData.fullName}</dd>
+                  <dd className="font-semibold text-gray-900">
+                    {formData.fullName}
+                  </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Email</dt>
-                  <dd className="font-semibold text-gray-900">{formData.email}</dd>
+                  <dd className="font-semibold text-gray-900">
+                    {formData.email}
+                  </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Azienda</dt>
-                  <dd className="font-semibold text-gray-900">{formData.companyName}</dd>
+                  <dd className="font-semibold text-gray-900">
+                    {formData.companyName}
+                  </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Location</dt>
-                  <dd className="font-semibold text-gray-900">{formData.companyLocation}</dd>
+                  <dd className="font-semibold text-gray-900">
+                    {formData.companyLocation}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -468,8 +517,8 @@ export default function SignupPage() {
       {/* Footer */}
       <div className="mt-8 text-center">
         <p className="text-sm text-gray-600">
-          Hai già un account?{' '}
-          <Link 
+          Hai già un account?{" "}
+          <Link
             href="/login"
             className="font-semibold text-blue-600 hover:text-blue-700 transition"
           >
