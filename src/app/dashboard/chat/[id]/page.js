@@ -7,6 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
 import { showToast } from "@/lib/toast";
+import { SkeletonChatDetail } from "@/components/ui/Skeletons";
 
 export default function ChatDetailPage() {
   const params = useParams();
@@ -179,13 +180,7 @@ export default function ChatDetailPage() {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonChatDetail />;
 
   if (!match) {
     return (

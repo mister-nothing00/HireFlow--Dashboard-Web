@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useMatches } from "@/lib/hooks/useMatches";
+import { SkeletonMatches } from "@/components/ui/Skeletons";
 
 export default function MatchesPage() {
   const { matches, stats, loading } = useMatches(); // ✅ Usa hook centralizzato
@@ -25,16 +26,7 @@ export default function MatchesPage() {
     return true;
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento matches...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonMatches />;
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">

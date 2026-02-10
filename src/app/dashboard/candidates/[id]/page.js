@@ -18,6 +18,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
 import { showToast } from "@/lib/toast";
+import { SkeletonCandidateProfile } from "@/components/ui/Skeletons";
 
 export default function CandidateProfilePage() {
   const params = useParams();
@@ -139,16 +140,7 @@ export default function CandidateProfilePage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento profilo...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonCandidateProfile />;
 
   if (!candidate) {
     return (

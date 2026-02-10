@@ -6,6 +6,7 @@ import { useCandidates } from '@/lib/hooks/useCandidates';
 import { useStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
+import { SkeletonCandidates } from '@/components/ui/Skeletons';
 
 export default function CandidatesPage() {
   const { currentCandidate, remainingCandidates, nextCandidate, loading } = useCandidates();
@@ -80,16 +81,7 @@ export default function CandidatesPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento candidati...</p>
-        </div>
-      </div>
-    );
-  }
+ if (loading) return <SkeletonCandidates />;
 
   if (!currentCandidate) {
     return (

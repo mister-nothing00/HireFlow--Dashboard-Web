@@ -5,6 +5,7 @@ import { Briefcase, Users, CheckCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
+import { SkeletonDashboard } from "@/components/ui/Skeletons";
 
 export default function DashboardHome() {
   const { company } = useStore();
@@ -187,32 +188,7 @@ export default function DashboardHome() {
     return `${diffDays} giorni fa`;
   };
 
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="mb-8">
-          <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-2"></div>
-          <div className="h-4 w-96 bg-gray-200 rounded animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-32 bg-gray-200 rounded-xl animate-pulse"
-            ></div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-40 bg-gray-200 rounded-xl animate-pulse"
-            ></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonDashboard />;
 
   const statsData = [
     {

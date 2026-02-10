@@ -1,46 +1,37 @@
-'use client';
+"use client";
 
-import { Plus, MapPin, Euro, Calendar, Edit2, Trash2, Eye } from 'lucide-react';
-import Link from 'next/link';
-import { useJobs } from '@/lib/hooks/useJobs';
+import { Plus, MapPin, Euro, Calendar, Edit2, Trash2, Eye } from "lucide-react";
+import Link from "next/link";
+import { useJobs } from "@/lib/hooks/useJobs";
+import { SkeletonJobsList } from "@/components/ui/Skeletons";
 
 export default function JobsPage() {
-  const { jobs, loading } = useJobs(); // ✅ Centralizzato con real-time!
+  const { jobs, loading } = useJobs();
 
   const getRemoteIcon = (policy) => {
-    if (policy === 'remote') return '🏠';
-    if (policy === 'hybrid') return '🔀';
-    return '🏢';
+    if (policy === "remote") return "🏠";
+    if (policy === "hybrid") return "🔀";
+    return "🏢";
   };
 
   const formatSalary = (min, max) => {
     return `€${min.toLocaleString()} - €${max.toLocaleString()}`;
   };
 
-   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento opportunità lavorative...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonJobsList />;
 
   return (
     <div className="p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            I Tuoi Jobs
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">I Tuoi Jobs</h1>
           <p className="text-gray-600">
-            {jobs.length} {jobs.length === 1 ? 'annuncio pubblicato' : 'annunci pubblicati'}
+            {jobs.length}{" "}
+            {jobs.length === 1 ? "annuncio pubblicato" : "annunci pubblicati"}
           </p>
         </div>
-        <Link 
+        <Link
           href="/dashboard/jobs/new"
           className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow-lg"
         >
@@ -59,7 +50,7 @@ export default function JobsPage() {
           <p className="text-gray-600 mb-6">
             Inizia a pubblicare il tuo primo annuncio per trovare candidati
           </p>
-          <Link 
+          <Link
             href="/dashboard/jobs/new"
             className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
           >
@@ -70,29 +61,33 @@ export default function JobsPage() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {jobs.map((job) => (
-            <div 
+            <div
               key={job.id}
               className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
             >
               {/* Job Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="text-3xl">{job.company?.logo_url || '💼'}</div>
+                  <div className="text-3xl">
+                    {job.company?.logo_url || "💼"}
+                  </div>
                   <div>
                     <h3 className="font-bold text-lg text-gray-900">
                       {job.title}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {job.company?.name || 'Company'}
+                      {job.company?.name || "Company"}
                     </p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  job.is_active 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-gray-100 text-gray-700'
-                }`}>
-                  {job.is_active ? 'Attivo' : 'Inattivo'}
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    job.is_active
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {job.is_active ? "Attivo" : "Inattivo"}
                 </span>
               </div>
 
@@ -107,7 +102,7 @@ export default function JobsPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <MapPin size={16} />
-                  <span>{job.location || 'Non specificato'}</span>
+                  <span>{job.location || "Non specificato"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <span>{getRemoteIcon(job.remote_policy)}</span>
@@ -115,14 +110,16 @@ export default function JobsPage() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar size={16} />
-                  <span>{new Date(job.created_at).toLocaleDateString('it-IT')}</span>
+                  <span>
+                    {new Date(job.created_at).toLocaleDateString("it-IT")}
+                  </span>
                 </div>
               </div>
 
               {/* Skills */}
               <div className="flex flex-wrap gap-2 mb-4">
                 {job.required_skills?.slice(0, 3).map((skill, i) => (
-                  <span 
+                  <span
                     key={i}
                     className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
                   >
@@ -138,23 +135,21 @@ export default function JobsPage() {
 
               {/* Actions */}
               <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
-                <Link 
+                <Link
                   href={`/dashboard/jobs/${job.id}`}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium text-sm"
                 >
                   <Eye size={16} />
                   <span>Vedi</span>
                 </Link>
-                <Link 
+                <Link
                   href={`/dashboard/jobs/${job.id}/edit`}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition font-medium text-sm"
                 >
                   <Edit2 size={16} />
                   <span>Modifica</span>
                 </Link>
-                <button 
-                  className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
-                >
+                <button className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
                   <Trash2 size={16} />
                 </button>
               </div>

@@ -5,6 +5,7 @@ import { MessageCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/lib/store";
+import { SkeletonChatList } from "@/components/ui/Skeletons";
 
 export default function ChatListPage() {
   const [matches, setMatches] = useState([]);
@@ -163,16 +164,7 @@ export default function ChatListPage() {
     return `${diffDays}g fa`;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Caricamento chat...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <SkeletonChatList />;
 
   return (
     <div className="flex h-screen bg-gray-50">
