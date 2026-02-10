@@ -118,22 +118,17 @@ export default function CandidateProfilePage() {
   // Controlla se è un match
   const checkForMatch = async () => {
     try {
-      const { data: ourJobs } = await supabase
-        .from("jobs")
-        .select("id")
-        .eq("company_id", company.id);
-
-      const ourJobIds = ourJobs?.map((j) => j.id) || [];
-      if (ourJobIds.length === 0) return;
-
-      const { data: theirSwipes } = await supabase
+      const { data, error } = await supabase
         .from("swipes")
-        .select("job_id")
+        .select("job_id, job:jobs!inner(id, company_id)")
         .eq("candidate_id", candidateId)
         .eq("direction", "right")
-        .in("job_id", ourJobIds);
+        .eq("job.company_id", company.id)
+        .limit(1);
 
-      if (theirSwipes && theirSwipes.length > 0) {
+      if (error) throw error;
+
+      if (data && data.length > 0) {
         console.log("🎉 MATCH!");
         showToast.success(
           "🎉 È un MATCH! Il candidato ha swipato right su un tuo job!",

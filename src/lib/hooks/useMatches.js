@@ -1,9 +1,85 @@
-import { useEffect } from 'react';
-import { useStore } from '../store';
-import { supabase } from '../supabase';
+import { useEffect, useCallback } from "react";
+import { useStore } from "../store";
+import { supabase } from "../supabase";
 
 export function useMatches() {
   const { matches, setMatches, setMatchesLoading, company } = useStore();
+
+  // 🚀 OTTIMIZZATO: da 3 + (N×2) query a 2 query parallele
+  // Con 20 candidati: prima → 43 query, ora → 2 query
+  const fetchMatches = useCallback(async () => {
+    if (!company?.id) return;
+
+    try {
+      setMatchesLoading(true);
+
+      const [swipesRes, matchesRes] = await Promise.all([
+        // Query 1: tutti i candidati che abbiamo swipato right (con dati candidato in join)
+        supabase
+          .from("company_swipes")
+          .select(
+            `
+            candidate_id,
+            created_at,
+            candidate:candidates(*)
+          `,
+          )
+          .eq("direction", "right"),
+
+        // Query 2: tutti i match reciproci già confermati (con job info in join)
+        supabase
+          .from("matches")
+          .select(
+            `
+            candidate_id,
+            job_id,
+            job:jobs(id, title, location, salary_min, salary_max)
+          `,
+          )
+          .eq("company_id", company.id),
+      ]);
+
+      if (swipesRes.error) throw swipesRes.error;
+      if (matchesRes.error) throw matchesRes.error;
+
+      const ourSwipes = swipesRes.data || [];
+      const confirmedMatches = matchesRes.data || [];
+
+      // Mappa candidato → match info (lookup O(1) invece di N query)
+      const matchMap = new Map();
+      confirmedMatches.forEach((m) => matchMap.set(m.candidate_id, m));
+
+      // Merge client-side: O(N) invece di O(N) query al database
+      const merged = ourSwipes
+        .filter((swipe) => swipe.candidate) // Filtra candidati eliminati
+        .map((swipe) => {
+          const match = matchMap.get(swipe.candidate_id);
+          return {
+            ...swipe.candidate,
+            hasMatch: !!match,
+            matchedJob: match?.job || null,
+            swipedAt: swipe.created_at,
+            status: match ? "matched" : "interested",
+          };
+        });
+
+      // Ordina: match reciproci prima, poi per data swipe (più recente prima)
+      const sorted = merged.sort((a, b) => {
+        if (a.hasMatch && !b.hasMatch) return -1;
+        if (!a.hasMatch && b.hasMatch) return 1;
+        return new Date(b.swipedAt) - new Date(a.swipedAt);
+      });
+
+      console.log(
+        `✅ Matches loaded: ${sorted.length} (2 queries instead of ${3 + ourSwipes.length * 2})`,
+      );
+      setMatches(sorted);
+    } catch (error) {
+      console.error("❌ Error fetching matches:", error);
+    } finally {
+      setMatchesLoading(false);
+    }
+  }, [company?.id]);
 
   useEffect(() => {
     if (!company?.id) return;
@@ -14,133 +90,64 @@ export function useMatches() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [company?.id]);
-
-  const fetchMatches = async () => {
-    try {
-      setMatchesLoading(true);
-
-      // 1. Fetch nostri swipe RIGHT con timestamp reale
-      const { data: ourSwipes, error: ourError } = await supabase
-        .from('company_swipes')
-        .select('candidate_id, created_at')
-        .eq('direction', 'right');
-
-      if (ourError) throw ourError;
-
-      if (!ourSwipes || ourSwipes.length === 0) {
-        setMatches([]);
-        setMatchesLoading(false);
-        return;
-      }
-
-      const candidateIds = ourSwipes.map((s) => s.candidate_id);
-
-      // 2. Fetch candidati info
-      const { data: candidates, error: candidatesError } = await supabase
-        .from('candidates')
-        .select('*')
-        .in('id', candidateIds);
-
-      if (candidatesError) throw candidatesError;
-
-      // 3. Fetch tutti i nostri job IDs per questa company
-      const { data: ourJobs } = await supabase
-        .from('jobs')
-        .select('id')
-        .eq('company_id', company.id);
-
-      const ourJobIds = ourJobs?.map(j => j.id) || [];
-
-      // 4. Check reciproci swipes solo sui nostri job
-      const matchesData = await Promise.all(
-        candidates.map(async (candidate) => {
-          // Cerca swipe right del candidato sui NOSTRI job
-          const { data: theirSwipes } = await supabase
-            .from('swipes')
-            .select('job_id')
-            .eq('candidate_id', candidate.id)
-            .eq('direction', 'right')
-            .in('job_id', ourJobIds.length > 0 ? ourJobIds : ['no-match']);
-
-          const hasMatch = theirSwipes && theirSwipes.length > 0;
-          const matchedJobId = hasMatch ? theirSwipes[0].job_id : null;
-
-          // Fetch job info se c'è match
-          let jobInfo = null;
-          if (matchedJobId) {
-            const { data: job } = await supabase
-              .from('jobs')
-              .select('title, location, salary_min, salary_max')
-              .eq('id', matchedJobId)
-              .single();
-            jobInfo = job;
-          }
-
-          // ✅ Prendi il timestamp REALE da ourSwipes
-          const swipeData = ourSwipes.find((s) => s.candidate_id === candidate.id);
-
-          return {
-            ...candidate,
-            hasMatch,
-            matchedJob: jobInfo,
-            swipedAt: swipeData?.created_at, // ✅ Timestamp reale dal database
-            status: hasMatch ? 'matched' : 'interested',
-          };
-        })
-      );
-
-      // Ordina: match prima, poi per data
-      const sorted = matchesData.sort((a, b) => {
-        if (a.hasMatch && !b.hasMatch) return -1;
-        if (!a.hasMatch && b.hasMatch) return 1;
-        return new Date(b.swipedAt) - new Date(a.swipedAt);
-      });
-
-      console.log('✅ Matches loaded:', sorted.length);
-      setMatches(sorted);
-    } catch (error) {
-      console.error('❌ Error fetching matches:', error);
-    } finally {
-      setMatchesLoading(false);
-    }
-  };
+  }, [company?.id, fetchMatches]);
 
   const subscribeToMatches = () => {
-    console.log('🔄 Subscribing to matches real-time updates...');
+    if (!company?.id) return;
+
+    console.log("🔄 Subscribing to matches real-time...");
 
     const channel = supabase
-      .channel('matches-changes')
+      .channel(`matches-${company.id}`)
+
+      // ✅ Ottimizzato: ascolta solo i match della nostra company
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'company_swipes',
+          event: "INSERT",
+          schema: "public",
+          table: "matches",
+          filter: `company_id=eq.${company.id}`,
         },
-        () => {
-          console.log('🔔 New swipe detected, refetching matches...');
-          fetchMatches();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'swipes',
+        async (payload) => {
+          console.log("🎉 New mutual match!", payload.new.candidate_id);
+
+          // Fetch job info per il nuovo match (solo 1 query piccola)
+          const { data: jobData } = await supabase
+            .from("jobs")
+            .select("id, title, location, salary_min, salary_max")
+            .eq("id", payload.new.job_id)
+            .single();
+
+          // Aggiorna localmente senza refetch totale
+          setMatches((prev) =>
+            prev
+              .map((m) =>
+                m.id === payload.new.candidate_id
+                  ? {
+                      ...m,
+                      hasMatch: true,
+                      matchedJob: jobData || null,
+                      status: "matched",
+                    }
+                  : m,
+              )
+              // Riordina: i nuovi match vanno in cima
+              .sort((a, b) => {
+                if (a.hasMatch && !b.hasMatch) return -1;
+                if (!a.hasMatch && b.hasMatch) return 1;
+                return new Date(b.swipedAt) - new Date(a.swipedAt);
+              }),
+          );
         },
-        () => {
-          console.log('🔔 Candidate swipe detected, refetching matches...');
-          fetchMatches();
-        }
       )
+
       .subscribe((status) => {
-        console.log('📡 Matches subscription status:', status);
+        console.log("📡 Matches subscription:", status);
       });
 
     return () => {
-      console.log('🔴 Unsubscribing from matches real-time...');
+      console.log("🔴 Unsubscribing from matches real-time...");
       supabase.removeChannel(channel);
     };
   };
@@ -151,10 +158,10 @@ export function useMatches() {
     interested: matches.filter((m) => !m.hasMatch).length,
   };
 
-  return { 
-    matches, 
+  return {
+    matches,
     stats,
-    loading: useStore((state) => state.matchesLoading), 
-    refetch: fetchMatches 
+    loading: useStore((state) => state.matchesLoading),
+    refetch: fetchMatches,
   };
 }
