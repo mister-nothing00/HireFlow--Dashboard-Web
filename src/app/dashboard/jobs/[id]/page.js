@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Euro, Calendar, Edit2, Trash2, Users, Briefcase } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-server';
 import { useStore } from '@/lib/store';
 import { showToast } from '@/lib/toast';
 

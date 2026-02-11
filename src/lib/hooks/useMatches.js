@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useStore } from "../store";
-import { supabase } from "../supabase";
+import { supabase } from "../supabase-server";
 
 export function useMatches() {
   const { matches, setMatches, setMatchesLoading, company } = useStore();

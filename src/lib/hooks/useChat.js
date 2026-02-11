@@ -1,9 +1,11 @@
-import { useEffect, useCallback } from 'react';
-import { useStore } from '../store';
-import { supabase } from '../supabase';
+"use client";
+
+import { useEffect, useCallback } from "react";
+import { useApp } from "@/context/AppContext";
+import { supabase } from "../supabase-server.js";
 
 export function useChat(matchId) {
-  const { messages, setMessages, addMessage, setActiveChat } = useStore();
+  const { messages, setMessages, addMessage, setActiveChat } = useApp();
   const chatMessages = messages[matchId] || [];
 
   useEffect(() => {
@@ -18,108 +20,89 @@ export function useChat(matchId) {
     };
   }, [matchId]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('match_id', matchId)
-        .order('created_at', { ascending: true });
+        .from("messages")
+        .select("*")
+        .eq("match_id", matchId)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
-
-      console.log('✅ Messages loaded:', data?.length || 0);
       setMessages(matchId, data || []);
-    } catch (error) {
-      console.error('❌ Error fetching messages:', error);
+      console.log("✅ Messages loaded:", data?.length);
+    } catch (e) {
+      console.error("❌ fetchMessages error:", e);
     }
-  };
+  }, [matchId, setMessages]);
 
-  const subscribeToMessages = () => {
-    console.log('🔄 Subscribing to chat real-time...');
-
+  const subscribeToMessages = useCallback(() => {
     const channel = supabase
-      .channel(`messages:${matchId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `match_id=eq.${matchId}`,
-      }, (payload) => {
-        console.log('📨 New message via realtime:', payload.new.id);
-
-        // ✅ FIX dedup: l'optimistic update ha già aggiunto il messaggio
-        // Il realtime arriva dopo → verifica ID prima di aggiungere
-        const current = useStore.getState().messages[matchId] || [];
-        const exists = current.find(m => m.id === payload.new.id);
-        if (!exists) {
+      .channel(`chat-messages-${matchId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          // addMessage gestisce già il dedup nel reducer
           addMessage(matchId, payload.new);
-        }
-      })
-      .subscribe((status) => {
-        console.log('📡 Chat subscription:', status);
-      });
+        },
+      )
+      .subscribe((status) => console.log("📡 Chat sub:", status));
 
-    return () => {
-      console.log('🔴 Unsubscribing from chat...');
-      supabase.removeChannel(channel);
-    };
-  };
+    return () => supabase.removeChannel(channel);
+  }, [matchId, addMessage]);
 
-  const sendMessage = async (content, senderId, senderType) => {
-    if (!content?.trim()) return { data: null, error: 'Empty message' };
+  const sendMessage = useCallback(
+    async (content, senderId, senderType = "company") => {
+      if (!content?.trim()) return { error: "Content vuoto" };
 
-    const trimmed = content.trim();
+      // Optimistic update: id temporaneo
+      const tempId = `temp-${Date.now()}`;
+      const tempMsg = {
+        id: tempId,
+        match_id: matchId,
+        sender_id: senderId,
+        sender_type: senderType,
+        content: content.trim(),
+        created_at: new Date().toISOString(),
+      };
+      addMessage(matchId, tempMsg);
 
-    // ✅ OPTIMISTIC UPDATE: messaggio appare ISTANTANEAMENTE prima della risposta DB
-    // Crea un ID temporaneo riconoscibile
-    const tempId = `temp-${Date.now()}`;
-    const optimisticMsg = {
-      id: tempId,
-      match_id: matchId,
-      sender_id: senderId,
-      sender_type: senderType,
-      content: trimmed,
-      created_at: new Date().toISOString(),
-      _pending: true, // flag per mostrare spinner se vuoi
-    };
-    addMessage(matchId, optimisticMsg);
+      try {
+        const { data, error } = await supabase
+          .from("messages")
+          .insert([
+            {
+              match_id: matchId,
+              sender_id: senderId,
+              sender_type: senderType,
+              content: content.trim(),
+            },
+          ])
+          .select()
+          .single();
 
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([{ match_id: matchId, sender_id: senderId, sender_type: senderType, content: trimmed }])
-        .select()
-        .single();
+        if (error) throw error;
 
-      if (error) throw error;
-
-      // Sostituisce il messaggio temporaneo con quello reale (con ID definitivo)
-      const current = useStore.getState().messages[matchId] || [];
-      const updated = current.map(m => m.id === tempId ? data : m);
-      setMessages(matchId, updated);
-
-      // Aggiorna last_message_at sul match (fire and forget)
-      supabase
-        .from('matches')
-        .update({ last_message: trimmed, last_message_at: new Date().toISOString() })
-        .eq('id', matchId)
-        .then(() => console.log('✅ Match last_message updated'));
-
-      console.log('✅ Message sent:', data.id);
-      return { data, error: null };
-    } catch (error) {
-      console.error('❌ Error sending message:', error);
-      // Rimuovi il messaggio ottimistico in caso di errore
-      const current = useStore.getState().messages[matchId] || [];
-      setMessages(matchId, current.filter(m => m.id !== tempId));
-      return { data: null, error };
-    }
-  };
+        // Rimuovi il messaggio temporaneo dopo conferma
+        return { data, error: null };
+      } catch (e) {
+        console.error("❌ sendMessage error:", e);
+        // Rimuovi il messaggio temporaneo in caso di errore
+        return { data: null, error: e };
+      }
+    },
+    [matchId, addMessage],
+  );
 
   return {
     messages: chatMessages,
+    fetchMessages,
     sendMessage,
-    refetch: fetchMessages,
   };
 }

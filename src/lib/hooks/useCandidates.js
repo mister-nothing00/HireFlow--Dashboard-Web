@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useStore } from '../store';
-import { supabase } from '../supabase';
+import { supabase } from '../supabase-server';
 
 export function useCandidates() {
   const {

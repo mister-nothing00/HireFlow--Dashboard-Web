@@ -16,8 +16,8 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase-server";
+import { useApp } from "@/lib/store";
 
 const STEPS = [
   { id: 1, name: "Account", icon: User },
@@ -27,7 +27,7 @@ const STEPS = [
 
 export default function SignupPage() {
   const router = useRouter();
-  const { setCompany } = useStore();
+  const { setCompany } = useApp();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);

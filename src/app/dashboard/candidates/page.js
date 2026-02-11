@@ -3,8 +3,8 @@
 import { X, Heart, Star, MapPin, Euro, Briefcase } from "lucide-react";
 import { useState } from "react";
 import { useCandidates } from "@/lib/hooks/useCandidates";
-import { useStore } from "@/lib/store";
-import { supabase } from "@/lib/supabase";
+import { useApp} from "@/lib/store";
+import { supabase } from "@/lib/supabase-server";
 import { showToast } from "@/lib/toast";
 import { SkeletonCandidates } from "@/components/ui/Skeletons";
 

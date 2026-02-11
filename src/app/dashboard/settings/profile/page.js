@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase-server';
 import { showToast } from '@/lib/toast';
 import { SkeletonCandidateProfile } from '@/components/ui/Skeletons';
 

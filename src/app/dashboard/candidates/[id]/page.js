@@ -15,8 +15,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase-server";
+import { useApp } from "@/context/AppContext";
 import { showToast } from "@/lib/toast";
 import { SkeletonCandidateProfile } from "@/components/ui/Skeletons";
 
@@ -24,7 +24,7 @@ export default function CandidateProfilePage() {
   const params = useParams();
   const router = useRouter();
   const candidateId = params.id;
-  const { company } = useStore();
+  const { company } = useApp();
 
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);

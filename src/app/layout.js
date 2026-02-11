@@ -1,31 +1,31 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import ToastProvider from "@/components/ui/ToastProvider";
+import { AppProvider } from "@/context/AppContext";
+import { Toaster } from "react-hot-toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "HireFlow - Il Recruiting Trasparente",
-  description:
-    "Trova i candidati perfetti con swipe intelligenti e salary trasparente",
+  title: "HireFlow - Dashboard Recruiter",
+  description: "La piattaforma di recruiting moderna",
 };
 
+// Root layout è un Server Component - NON aggiungere 'use client'
 export default function RootLayout({ children }) {
   return (
     <html lang="it">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-        <ToastProvider />
+      <body className={inter.className}>
+        {/* Context globale per auth, settings, chat, etc. */}
+        <AppProvider>
+          {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: { borderRadius: "12px", fontFamily: "Inter, sans-serif" },
+            }}
+          />
+        </AppProvider>
       </body>
     </html>
   );

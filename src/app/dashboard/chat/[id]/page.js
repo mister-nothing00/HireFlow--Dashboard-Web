@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Send, MoreVertical, Phone, Video } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-server";
 import { useStore } from "@/lib/store";
 import { showToast } from "@/lib/toast";
 import { SkeletonChatDetail } from "@/components/ui/Skeletons";

@@ -1,174 +1,168 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Home, Briefcase, Users, MessageSquare, MessageCircle, Settings, LogOut } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
-import { showToast } from '@/lib/toast';
-import { useStore } from '@/lib/store';
+import { useEffect, useState, memo } from "react";
+import {
+  Home,
+  Briefcase,
+  Users,
+  MessageSquare,
+  MessageCircle,
+  Settings,
+  LogOut,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { showToast } from "@/lib/toast";
+import { useCompany } from "@/context/AppContext";
+
+const NAV_ITEMS = [
+  { name: "Home", href: "/dashboard", icon: Home },
+  { name: "Jobs", href: "/dashboard/jobs", icon: Briefcase },
+  { name: "Candidati", href: "/dashboard/candidates", icon: Users },
+  { name: "Matches", href: "/dashboard/matches", icon: MessageSquare },
+  { name: "Chat", href: "/dashboard/chat", icon: MessageCircle },
+  { name: "Impostazioni", href: "/dashboard/settings", icon: Settings },
+];
+
+// NavItem memoizzato: re-render solo se cambiano href o isActive
+const NavItem = memo(function NavItem({ item, isActive, unread }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${
+        isActive
+          ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+      }`}
+    >
+      <Icon size={20} />
+      <span>{item.name}</span>
+      {item.name === "Chat" && unread > 0 && (
+        <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+          {unread > 9 ? "9+" : unread}
+        </span>
+      )}
+    </Link>
+  );
+});
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
-  const { logout, user, company } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { logout } = useAuth();
+  const company = useCompany(); // solo company dal Context, no re-render inutili
+  const [unread, setUnread] = useState(0);
 
-  const navigation = [
-    { name: 'Home', href: '/dashboard', icon: Home },
-    { name: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
-    { name: 'Candidati', href: '/dashboard/candidates', icon: Users },
-    { name: 'Matches', href: '/dashboard/matches', icon: MessageSquare },
-    { name: 'Chat', href: '/dashboard/chat', icon: MessageCircle },
-    { name: 'Impostazioni', href: '/dashboard/settings', icon: Settings },
-  ];
+  const isActive = (href) =>
+    href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
-  const isActive = (href) => {
-    if (href === '/dashboard') return pathname === href;
-    return pathname.startsWith(href);
-  };
-
-  // 🔔 Conta messaggi non letti + realtime notification
+  // 🔔 Messaggi non letti + real-time
   useEffect(() => {
     if (!company?.id) return;
 
+    let mounted = true;
+
     const fetchUnread = async () => {
-      try {
-        // Prendi tutti i match della company
-        const { data: matches } = await supabase
-          .from('matches')
-          .select('id')
-          .eq('company_id', company.id);
+      const { data: matches } = await supabase
+        .from("matches")
+        .select("id")
+        .eq("company_id", company.id);
 
-        if (!matches?.length) return;
+      if (!matches?.length || !mounted) return;
 
-        const matchIds = matches.map((m) => m.id);
+      const matchIds = matches.map((m) => m.id);
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .in("match_id", matchIds)
+        .neq("sender_id", company.id)
+        .is("read_at", null);
 
-        // Conta messaggi non letti (non inviati dalla company)
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .in('match_id', matchIds)
-          .neq('sender_id', company.id)
-          .is('read_at', null);
-
-        setUnreadCount(count || 0);
-      } catch (e) {
-        console.error('❌ Error fetching unread:', e);
-      }
+      if (mounted) setUnread(count || 0);
     };
 
     fetchUnread();
 
-    // Realtime: ascolta nuovi messaggi per questa company
     const channel = supabase
-      .channel(`layout-messages-${company.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-      }, async (payload) => {
-        // Verifica che il messaggio sia per un match della nostra company
-        const { data: match } = await supabase
-          .from('matches')
-          .select('id, company_id')
-          .eq('id', payload.new.match_id)
-          .single();
+      .channel(`layout-unread-${company.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        async (payload) => {
+          const { data: match } = await supabase
+            .from("matches")
+            .select("company_id")
+            .eq("id", payload.new.match_id)
+            .single();
 
-        if (match?.company_id !== company.id) return;
-        if (payload.new.sender_id === company.id) return; // messaggio nostro, ignora
+          if (match?.company_id !== company.id) return;
+          if (payload.new.sender_id === company.id) return;
 
-        // Aggiorna contatore
-        setUnreadCount((prev) => prev + 1);
-
-        // Toast solo se non siamo già nella chat
-        if (!pathname.startsWith('/dashboard/chat')) {
-          showToast.info('💬 Nuovo messaggio ricevuto!');
-        }
-      })
+          setUnread((prev) => prev + 1);
+          if (!pathname.startsWith("/dashboard/chat")) {
+            showToast.info("💬 Nuovo messaggio!");
+          }
+        },
+      )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [company?.id, pathname]);
 
-  // Reset unread quando entriamo nella chat
+  // Reset unread quando entri in chat
   useEffect(() => {
-    if (pathname.startsWith('/dashboard/chat')) {
-      setUnreadCount(0);
-    }
+    if (pathname.startsWith("/dashboard/chat")) setUnread(0);
   }, [pathname]);
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col py-6 px-4 flex-shrink-0">
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
-          <div className="text-3xl">🚀</div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">HireFlow</h1>
-            <p className="text-sm text-gray-500">Recruiter</p>
+        <Link href="/dashboard" className="flex items-center gap-2 px-4 mb-8">
+          <span className="text-2xl">🚀</span>
+          <span className="text-xl font-bold text-gray-900">HireFlow</span>
+        </Link>
+
+        {/* Company badge */}
+        {company && (
+          <div className="mx-4 mb-6 p-3 bg-blue-50 rounded-xl">
+            <p className="text-xs text-blue-500 font-medium">Loggato come</p>
+            <p className="text-sm font-bold text-blue-900 truncate">
+              {company.name}
+            </p>
           </div>
-        </div>
+        )}
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            const isChat = item.href === '/dashboard/chat';
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                  active
-                    ? 'bg-blue-50 text-blue-700 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-                }`}
-              >
-                <Icon size={20} />
-                <span className="flex-1">{item.name}</span>
-
-                {/* 🔴 Badge unread messaggi */}
-                {isChat && unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        {/* Nav */}
+        <nav className="flex-1 space-y-1">
+          {NAV_ITEMS.map((item) => (
+            <NavItem
+              key={item.href}
+              item={item}
+              isActive={isActive(item.href)}
+              unread={unread}
+            />
+          ))}
         </nav>
 
-        {/* Company Info */}
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex items-center gap-3 px-4 py-3 mb-2">
-            <div className="text-2xl">🏢</div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
-                {company?.name || 'Company'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {company?.location || 'Location'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition"
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
-        </div>
+        {/* Logout */}
+        <button
+          onClick={() => logout()}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition font-medium text-sm mt-4"
+        >
+          <LogOut size={20} />
+          <span>Esci</span>
+        </button>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }
