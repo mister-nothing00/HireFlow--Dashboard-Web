@@ -1,16 +1,20 @@
+// ════════   ═══════════════════════════════════
+// src/app/dashboard/jobs/[id]/edit/EditJobClient.jsx
+// CLIENT COMPONENT
+// ═══════════════════════════════════════════
 "use client";
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase"; // ✅ CLIENT supabase
-import { useApp } from "@/context/AppContext"; // ✅ Context, non Zustand
 import { showToast } from "@/lib/toast";
 
 const REMOTE_OPTIONS = ["remote", "hybrid", "onsite"];
 const CONTRACT_OPTIONS = ["full-time", "part-time", "contract", "internship"];
-const SENIORITY_OPTIONS = ["junior", "mid", "senior", "lead"];
+const SENIORITY_OPTIONS = ["junior", "mid", "senior", "lead", "principal"];
+const CURRENCY_OPTIONS = ["EUR", "USD", "GBP"];
 
 function FieldError({ msg }) {
   return msg ? (
@@ -20,27 +24,50 @@ function FieldError({ msg }) {
   ) : null;
 }
 
-const INITIAL_FORM = {
-  title: "",
-  description: "",
-  location: "",
-  remote_policy: "hybrid",
-  contract_type: "full-time",
-  salary_min: "",
-  salary_max: "",
-  salary_currency: "EUR",
-  required_skills: "",
-  nice_to_have_skills: "",
-  seniority: "mid",
-  experience_years_min: "",
-};
+function Label({ children, required }) {
+  return (
+    <label className="block text-sm font-semibold text-gray-900 mb-2">
+      {children} {required && <span className="text-red-500">*</span>}
+    </label>
+  );
+}
 
-export default function NewJobPage() {
+function Input({ name, value, onChange, error, ...rest }) {
+  return (
+    <>
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm ${
+          error ? "border-red-400 bg-red-50" : "border-gray-200"
+        }`}
+        {...rest}
+      />
+      <FieldError msg={error} />
+    </>
+  );
+}
+
+export default function EditJobClient({ job, company }) {
   const router = useRouter();
-  const { company } = useApp(); // ✅ Context
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
-  const [form, setForm] = useState(INITIAL_FORM);
+
+  const [form, setForm] = useState({
+    title: job.title || "",
+    description: job.description || "",
+    location: job.location || "",
+    remote_policy: job.remote_policy || "hybrid",
+    contract_type: job.contract_type || "full-time",
+    salary_min: job.salary_min || "",
+    salary_max: job.salary_max || "",
+    salary_currency: job.salary_currency || "EUR",
+    required_skills: job.required_skills?.join(", ") || "",
+    nice_to_have_skills: job.nice_to_have_skills?.join(", ") || "",
+    seniority: job.seniority || "mid",
+    experience_years_min: job.experience_years_min || "",
+  });
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -71,15 +98,9 @@ export default function NewJobPage() {
       e.preventDefault();
       if (!validate()) return;
 
-      if (!company?.id) {
-        showToast.error("Errore: ricarica la pagina");
-        return;
-      }
-
-      setLoading(true);
+      setSaving(true);
       try {
         const jobData = {
-          company_id: company.id,
           title: form.title.trim(),
           description: form.description.trim(),
           location: form.location.trim(),
@@ -100,42 +121,40 @@ export default function NewJobPage() {
           experience_years_min: form.experience_years_min
             ? parseInt(form.experience_years_min)
             : null,
-          is_active: true,
         };
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("jobs")
-          .insert([jobData])
-          .select()
-          .single();
+          .update(jobData)
+          .eq("id", job.id)
+          .eq("company_id", company.id);
+
         if (error) throw error;
 
-        showToast.success("✅ Job pubblicato!");
-        router.push("/dashboard/jobs");
+        showToast.success("✅ Job aggiornato!");
+        router.push(`/dashboard/jobs/${job.id}`);
       } catch (err) {
-        console.error("❌ Error creating job:", err);
+        console.error("❌ Update error:", err);
         showToast.error(`Errore: ${err.message}`);
       } finally {
-        setLoading(false);
+        setSaving(false);
       }
     },
-    [form, company?.id, router],
+    [form, job.id, company.id, router],
   );
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
         <Link
-          href="/dashboard/jobs"
+          href={`/dashboard/jobs/${job.id}`}
           className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-4 transition"
         >
-          <ArrowLeft size={18} /> Torna ai Jobs
+          <ArrowLeft size={18} /> Torna al Job
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">
-          Pubblica Nuovo Job
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">Modifica Job</h1>
         <p className="text-gray-500 text-sm">
-          Compila tutti i campi — salary range obbligatorio! Zero ghosting 🚀
+          Aggiorna le informazioni dell'annuncio
         </p>
       </div>
 
@@ -145,56 +164,50 @@ export default function NewJobPage() {
       >
         {/* Titolo */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Titolo Job <span className="text-red-500">*</span>
-          </label>
-          <input
+          <Label required>Titolo Job</Label>
+          <Input
             name="title"
             value={form.title}
             onChange={handleChange}
-            placeholder="es. Frontend Developer, UX Designer..."
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition ${errors.title ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+            placeholder="es. Frontend Developer"
+            error={errors.title}
           />
-          <FieldError msg={errors.title} />
         </div>
 
         {/* Descrizione */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Descrizione <span className="text-red-500">*</span>
-          </label>
+          <Label required>Descrizione</Label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
             rows={6}
-            placeholder="Descrivi il ruolo, responsabilità, cosa offrite..."
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm resize-none transition ${errors.description ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+            placeholder="Descrivi il ruolo, le responsabilità..."
+            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition text-sm resize-none ${
+              errors.description
+                ? "border-red-400 bg-red-50"
+                : "border-gray-200"
+            }`}
           />
           <FieldError msg={errors.description} />
         </div>
 
         {/* Location */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Location <span className="text-red-500">*</span>
-          </label>
-          <input
+          <Label required>Location</Label>
+          <Input
             name="location"
             value={form.location}
             onChange={handleChange}
             placeholder="es. Milano, Roma, Remote..."
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition ${errors.location ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+            error={errors.location}
           />
-          <FieldError msg={errors.location} />
         </div>
 
-        {/* Remote + Contratto */}
+        {/* Remote + Contract */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Remote Policy <span className="text-red-500">*</span>
-            </label>
+            <Label required>Remote Policy</Label>
             <select
               name="remote_policy"
               value={form.remote_policy}
@@ -209,9 +222,7 @@ export default function NewJobPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Tipo Contratto <span className="text-red-500">*</span>
-            </label>
+            <Label required>Tipo Contratto</Label>
             <select
               name="contract_type"
               value={form.contract_type}
@@ -229,12 +240,7 @@ export default function NewJobPage() {
 
         {/* Salary */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Salary Range Annuo <span className="text-red-500">*</span>
-            <span className="text-gray-400 font-normal ml-2">
-              — trasparenza totale, obbligatorio
-            </span>
-          </label>
+          <Label required>Salary Range (annuo)</Label>
           <div className="flex items-center gap-3">
             <select
               name="salary_currency"
@@ -242,7 +248,7 @@ export default function NewJobPage() {
               onChange={handleChange}
               className="px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white w-24"
             >
-              {["EUR", "USD", "GBP"].map((o) => (
+              {CURRENCY_OPTIONS.map((o) => (
                 <option key={o}>{o}</option>
               ))}
             </select>
@@ -269,41 +275,29 @@ export default function NewJobPage() {
 
         {/* Skills */}
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Skills Richieste <span className="text-red-500">*</span>{" "}
-            <span className="text-gray-400 font-normal">
-              (separate da virgola)
-            </span>
-          </label>
-          <input
+          <Label required>Skills Richieste (virgola-separated)</Label>
+          <Input
             name="required_skills"
             value={form.required_skills}
             onChange={handleChange}
             placeholder="React, TypeScript, Node.js"
-            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition ${errors.required_skills ? "border-red-400 bg-red-50" : "border-gray-200"}`}
+            error={errors.required_skills}
           />
-          <FieldError msg={errors.required_skills} />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Nice to Have{" "}
-            <span className="text-gray-400 font-normal">(opzionale)</span>
-          </label>
-          <input
+          <Label>Nice to Have</Label>
+          <Input
             name="nice_to_have_skills"
             value={form.nice_to_have_skills}
             onChange={handleChange}
             placeholder="GraphQL, Docker, AWS"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
           />
         </div>
 
         {/* Seniority + Experience */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Seniority
-            </label>
+            <Label>Seniority</Label>
             <select
               name="seniority"
               value={form.seniority}
@@ -318,16 +312,13 @@ export default function NewJobPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Anni Esperienza Min
-            </label>
-            <input
+            <Label>Anni di Esperienza Min</Label>
+            <Input
               name="experience_years_min"
               type="number"
               value={form.experience_years_min}
               onChange={handleChange}
               placeholder="es. 3"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
             />
           </div>
         </div>
@@ -335,23 +326,23 @@ export default function NewJobPage() {
         {/* Submit */}
         <div className="flex gap-3 pt-4 border-t border-gray-100">
           <Link
-            href="/dashboard/jobs"
+            href={`/dashboard/jobs/${job.id}`}
             className="flex-1 text-center px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition font-medium"
           >
             Annulla
           </Link>
           <button
             type="submit"
-            disabled={loading}
+            disabled={saving}
             className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition font-semibold"
           >
-            {loading ? (
+            {saving ? (
               <>
-                <Loader2 size={18} className="animate-spin" /> Pubblicando...
+                <Loader2 size={18} className="animate-spin" /> Salvataggio...
               </>
             ) : (
               <>
-                <Plus size={18} /> Pubblica Job
+                <Save size={18} /> Salva Modifiche
               </>
             )}
           </button>
