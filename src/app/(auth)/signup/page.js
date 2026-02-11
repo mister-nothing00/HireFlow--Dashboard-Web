@@ -16,8 +16,8 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase-server";
-import { useApp } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
+import { useApp } from "@/context/AppContext";
 
 const STEPS = [
   { id: 1, name: "Account", icon: User },

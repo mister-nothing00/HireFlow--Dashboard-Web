@@ -4,8 +4,8 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, AlertCircle, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase"; // ✅ CLIENT supabase
-import { useApp } from "@/context/AppContext"; // ✅ Context, non Zustand
+import { supabase } from "@/lib/supabase";
+import { useApp } from "@/context/AppContext";
 import { showToast } from "@/lib/toast";
 
 const REMOTE_OPTIONS = ["remote", "hybrid", "onsite"];

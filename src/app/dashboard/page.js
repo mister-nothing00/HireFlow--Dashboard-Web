@@ -1,6 +1,3 @@
-// ⚠️ NON aggiungere 'use client' → questo è un Server Component
-// Fetch dati lato server → zero loading spinners al primo caricamento
-
 import { redirect } from "next/navigation";
 import { getServerSession } from "@/lib/supabase-server";
 import DashboardHomeClient from "@/components/DashboardHomeClient";

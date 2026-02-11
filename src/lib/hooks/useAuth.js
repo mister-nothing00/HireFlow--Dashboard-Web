@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase-server.js";
+import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 
 export function useAuth() {

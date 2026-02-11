@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { MessageCircle, Search } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase-server";
-import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
+import { useApp } from "@/context/AppContext";
 import { SkeletonChatList } from "@/components/ui/Skeletons";
 
 export default function ChatListPage() {

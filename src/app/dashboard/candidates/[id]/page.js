@@ -15,7 +15,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase-server";
+import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 import { showToast } from "@/lib/toast";
 import { SkeletonCandidateProfile } from "@/components/ui/Skeletons";

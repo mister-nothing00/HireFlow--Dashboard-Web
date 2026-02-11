@@ -6,13 +6,13 @@ import {
   Save, Loader2, Camera, Linkedin, Twitter, Instagram,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useStore } from '@/lib/store';
-import { supabase } from '@/lib/supabase-server';
+import { useApp } from '@/context/AppContext';
+import { supabase } from "@/lib/supabase";
 import { showToast } from '@/lib/toast';
 import { SkeletonCandidateProfile } from '@/components/ui/Skeletons';
 
 export default function ProfileEditPage() {
-  const { user, company, setCompany } = useStore();
+  const { user, company, setCompany } = useApp();
   const [loading, setLoading] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef(null);
