@@ -1,196 +1,116 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useContext,
-  useReducer,
-  useMemo,
-  useCallback,
-} from "react";
-
-// ─── Initial State ───────────────────────────────────────────────
-const initialState = {
-  user: null,
-  company: null,
-  settings: {
-    notifications: true,
-    emailAlerts: true,
-    theme: "light",
-  },
-  // Chat state (in-memory, no persist)
-  activeChat: null,
-  messages: {},
-  // UI
-  candidateIndex: 0,
-};
-
-// ─── Reducer ─────────────────────────────────────────────────────
-function appReducer(state, action) {
-  switch (action.type) {
-    case "SET_USER":
-      return { ...state, user: action.payload };
-
-    case "SET_COMPANY":
-      return { ...state, company: action.payload };
-
-    case "CLEAR_AUTH":
-      return {
-        ...initialState,
-        settings: state.settings, // mantieni le settings
-      };
-
-    case "UPDATE_SETTINGS":
-      return { ...state, settings: { ...state.settings, ...action.payload } };
-
-    // ── Chat ────────────────────────────────────────────────────
-    case "SET_ACTIVE_CHAT":
-      return { ...state, activeChat: action.payload };
-
-    case "SET_MESSAGES":
-      return {
-        ...state,
-        messages: { ...state.messages, [action.chatId]: action.payload },
-      };
-
-    case "ADD_MESSAGE": {
-      const existing = state.messages[action.chatId] || [];
-      // Dedup: evita doppi (optimistic + realtime)
-      const alreadyExists = existing.some((m) => m.id === action.payload.id);
-      if (alreadyExists) return state;
-      return {
-        ...state,
-        messages: {
-          ...state.messages,
-          [action.chatId]: [...existing, action.payload],
-        },
-      };
-    }
-
-    case "CLEAR_MESSAGES": {
-      const { [action.chatId]: _, ...rest } = state.messages;
-      return { ...state, messages: rest };
-    }
-
-    // ── Candidate swipe index ───────────────────────────────────
-    case "NEXT_CANDIDATE":
-      return { ...state, candidateIndex: state.candidateIndex + 1 };
-
-    case "RESET_CANDIDATE_INDEX":
-      return { ...state, candidateIndex: 0 };
-
-    default:
-      return state;
-  }
-}
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 // ─── Context ─────────────────────────────────────────────────────
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+  // ── Auth state ────────────────────────────────────────────────
+  const [user, setUser]       = useState(null);
+  const [company, setCompany] = useState(null);
+  const [settings, setSettings] = useState({
+    notifications: true,
+    emailAlerts: true,
+    theme: 'light',
+  });
 
-  // Action creators stabili con useCallback
-  const setUser = useCallback(
-    (u) => dispatch({ type: "SET_USER", payload: u }),
-    [],
-  );
-  const setCompany = useCallback(
-    (c) => dispatch({ type: "SET_COMPANY", payload: c }),
-    [],
-  );
-  const clearAuth = useCallback(() => dispatch({ type: "CLEAR_AUTH" }), []);
-  const updateSettings = useCallback(
-    (s) => dispatch({ type: "UPDATE_SETTINGS", payload: s }),
-    [],
-  );
+  // ── Chat state (in-memory) ────────────────────────────────────
+  const [activeChat, setActiveChat] = useState(null);
+  const [messages, setMessagesMap]  = useState({}); // { [matchId]: Message[] }
 
-  const setActiveChat = useCallback(
-    (id) => dispatch({ type: "SET_ACTIVE_CHAT", payload: id }),
-    [],
-  );
-  const setMessages = useCallback(
-    (chatId, msgs) => dispatch({ type: "SET_MESSAGES", chatId, payload: msgs }),
-    [],
-  );
-  const addMessage = useCallback(
-    (chatId, msg) => dispatch({ type: "ADD_MESSAGE", chatId, payload: msg }),
-    [],
-  );
-  const clearMessages = useCallback(
-    (chatId) => dispatch({ type: "CLEAR_MESSAGES", chatId }),
-    [],
-  );
+  // ── Candidates state ──────────────────────────────────────────
+  const [candidateIndex, setCandidateIndex] = useState(0);
 
-  const nextCandidate = useCallback(
-    () => dispatch({ type: "NEXT_CANDIDATE" }),
-    [],
-  );
-  const resetCandidateIndex = useCallback(
-    () => dispatch({ type: "RESET_CANDIDATE_INDEX" }),
-    [],
-  );
+  // ── Actions ───────────────────────────────────────────────────
 
-  // Memoizza il value per evitare re-render inutili
-  const value = useMemo(
-    () => ({
-      // State
-      ...state,
+  const clearAuth = useCallback(() => {
+    setUser(null);
+    setCompany(null);
+    setMessagesMap({});
+    setCandidateIndex(0);
+  }, []);
 
-      // Auth actions
-      setUser,
-      setCompany,
-      clearAuth,
-      updateSettings,
+  const updateSettings = useCallback((updates) => {
+    setSettings(prev => ({ ...prev, ...updates }));
+  }, []);
 
-      // Chat actions
-      setActiveChat,
-      setMessages,
-      addMessage,
-      clearMessages,
+  // Chat
+  const setMessages = useCallback((chatId, msgs) => {
+    setMessagesMap(prev => ({ ...prev, [chatId]: msgs }));
+  }, []);
 
-      // Candidate actions
-      nextCandidate,
-      resetCandidateIndex,
-    }),
-    [
-      state,
-      setUser,
-      setCompany,
-      clearAuth,
-      updateSettings,
-      setActiveChat,
-      setMessages,
-      addMessage,
-      clearMessages,
-      nextCandidate,
-      resetCandidateIndex,
-    ],
-  );
+  const addMessage = useCallback((chatId, msg) => {
+    setMessagesMap(prev => {
+      const existing = prev[chatId] || [];
+      // Dedup: evita doppi da optimistic update + realtime
+      if (existing.some(m => m.id === msg.id)) return prev;
+      return { ...prev, [chatId]: [...existing, msg] };
+    });
+  }, []);
+
+  const clearMessages = useCallback((chatId) => {
+    setMessagesMap(prev => {
+      const next = { ...prev };
+      delete next[chatId];
+      return next;
+    });
+  }, []);
+
+  // Candidates
+  const nextCandidate       = useCallback(() => setCandidateIndex(i => i + 1), []);
+  const resetCandidateIndex = useCallback(() => setCandidateIndex(0), []);
+
+  // ── Value memoizzato ──────────────────────────────────────────
+  const value = useMemo(() => ({
+    // State
+    user,
+    company,
+    settings,
+    activeChat,
+    messages,
+    candidateIndex,
+
+    // Actions auth
+    setUser,
+    setCompany,
+    clearAuth,
+    updateSettings,
+
+    // Actions chat
+    setActiveChat,
+    setMessages,
+    addMessage,
+    clearMessages,
+
+    // Actions candidates
+    nextCandidate,
+    resetCandidateIndex,
+  }), [
+    user, company, settings, activeChat, messages, candidateIndex,
+    clearAuth, updateSettings,
+    setMessages, addMessage, clearMessages,
+    nextCandidate, resetCandidateIndex,
+  ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────
+// ─── Hook principale ──────────────────────────────────────────────
 export function useApp() {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error("useApp must be used inside <AppProvider>");
+  if (!ctx) throw new Error('useApp deve essere usato dentro <AppProvider>');
   return ctx;
 }
 
-// ─── Selectors specializzati (evitano re-render inutili) ──────────
-export function useUser() {
-  return useApp().user;
-}
-export function useCompany() {
-  return useApp().company;
-}
-export function useSettings() {
-  return useApp().settings;
-}
-export function useChatState(chatId) {
-  const { messages, activeChat } = useApp();
-  return {
-    messages: messages[chatId] || [],
-    activeChat,
-  };
+// ─── Selectors specifici (meno re-render) ─────────────────────────
+// Usa questi invece di useApp() quando ti serve solo 1 pezzo di stato
+
+export function useUser()     { return useApp().user; }
+export function useCompany()  { return useApp().company; }
+export function useSettings() { return useApp().settings; }
+
+export function useChatMessages(chatId) {
+  const { messages } = useApp();
+  return messages[chatId] || [];
 }
