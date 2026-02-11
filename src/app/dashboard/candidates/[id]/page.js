@@ -116,7 +116,7 @@ export default function CandidateProfilePage() {
     }
   };
 
-  // Controlla se è un match
+  // Funzione per eseguire lo swipe e gestire il match
   const checkForMatch = async () => {
     try {
       const { data, error } = await supabase
@@ -130,7 +130,22 @@ export default function CandidateProfilePage() {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        console.log("🎉 MATCH!");
+        const jobId = data[0].job_id;
+
+        // ✅ FIX CRITICO: inserisce il match nella tabella matches
+        const { error: matchError } = await supabase.from("matches").insert({
+          candidate_id: candidateId,
+          job_id: jobId,
+          company_id: company.id,
+          status: "matched",
+        });
+
+        if (matchError && matchError.code !== "23505") {
+          console.error("❌ Error creating match:", matchError);
+          throw matchError;
+        }
+
+        console.log("🎉 MATCH creato!", { candidateId, jobId });
         showToast.success(
           "🎉 È un MATCH! Il candidato ha swipato right su un tuo job!",
         );
