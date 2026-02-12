@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════
 import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/supabase-server';
-import EditJobClient from './EditJobClient';
+import EditJobClient from '../../../../../components/EditJobClient';
 
 export const dynamic = 'force-dynamic';
 
