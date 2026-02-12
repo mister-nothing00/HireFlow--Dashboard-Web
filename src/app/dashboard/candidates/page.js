@@ -1,10 +1,12 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/supabase-server';
 import CandidatesClient from '@/components/CandidatesClient';
+import { SkeletonCandidates } from '@/components/ui/Skeletons';
 
 export const dynamic = 'force-dynamic';
 
-export default async function CandidatesPage() {
+async function CandidatesContent() {
   const { user, company, supabase } = await getServerSession();
   if (!user || !company) redirect('/login');
 
@@ -34,5 +36,13 @@ export default async function CandidatesPage() {
       company={company}
       initialCandidates={candidates || []}
     />
+  );
+}
+
+export default function CandidatesPage() {
+  return (
+    <Suspense fallback={<SkeletonCandidates />}>
+      <CandidatesContent />
+    </Suspense>
   );
 }

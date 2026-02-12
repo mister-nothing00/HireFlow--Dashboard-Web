@@ -18,7 +18,7 @@ export function useAuth() {
         const { data, error } = await supabase
           .from("companies")
           .select("*")
-          .eq("user_id", userId)
+          .eq("owner_id", userId) // ✅ CAMBIATO: user_id → owner_id
           .single();
 
         if (error) {
@@ -85,23 +85,6 @@ export function useAuth() {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  // Redirect logic
-  useEffect(() => {
-    if (loading) return;
-
-    const isAuthPage =
-      pathname.startsWith("/login") || pathname.startsWith("/signup");
-    const isDashboard = pathname.startsWith("/dashboard");
-
-    if (!user && isDashboard) {
-      console.log("🚫 Redirect → /login");
-      router.push("/login");
-    } else if (user && isAuthPage) {
-      console.log("✅ Redirect → /dashboard");
-      router.push("/dashboard");
-    }
-  }, [user, loading, pathname]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();

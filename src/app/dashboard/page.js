@@ -1,19 +1,20 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getServerSession } from "@/lib/supabase-server";
 import DashboardHomeClient from "@/components/DashboardHomeClient";
+import { SkeletonDashboard } from "@/components/ui/Skeletons";
 
-// Forza questo componente a essere sempre SSR (dashboard autenticata)
-export const dynamic = "force-dynamic"; // Cache solo i dati pubblici, non quelli specifici dell'utente
+export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+/// ─── Server Component per fetch iniziale e auth ───────────────────────────────────────
+async function DashboardContent() {
   const { user, company, supabase } = await getServerSession();
 
-  // Se non c'è sessione valida, reindirizza a login (Server-side redirect)
   if (!user || !company) {
     redirect("/login");
   }
 
-  // 🚀 Fetch iniziale in parallelo server-side (zero CSR waterfall)
+  // 🚀 Fetch iniziale in parallelo server-side
   const [jobsRes, swipesRes, matchesRes, recentRes] = await Promise.all([
     supabase
       .from("jobs")
@@ -59,5 +60,14 @@ export default async function DashboardPage() {
       initialStats={initialStats}
       initialActivity={recentRes.data || []}
     />
+  );
+}
+
+// ✅ Main component con Suspense
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<SkeletonDashboard />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
