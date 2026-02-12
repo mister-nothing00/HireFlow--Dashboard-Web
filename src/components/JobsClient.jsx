@@ -6,7 +6,7 @@ import { Plus, Eye, Edit2, Trash2, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
 
-// ─── Memoized ────────────────────────────────────────────────────
+// Card per ogni job, con azioni per vedere, modificare ed eliminare
 const JobCard = memo(function JobCard({ job, onDelete }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">

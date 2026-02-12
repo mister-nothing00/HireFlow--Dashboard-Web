@@ -1,11 +1,12 @@
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
+// Utility per mostrare notifiche toast in modo centralizzato, con stili personalizzati per successi ed errori
 export const showToast = {
   success: (message) => {
     toast.success(message, {
       style: {
-        background: '#10b981',
-        color: '#fff',
+        background: "#10b981",
+        color: "#fff",
       },
     });
   },
@@ -13,8 +14,8 @@ export const showToast = {
   error: (message) => {
     toast.error(message, {
       style: {
-        background: '#ef4444',
-        color: '#fff',
+        background: "#ef4444",
+        color: "#fff",
       },
     });
   },
@@ -25,9 +26,9 @@ export const showToast = {
 
   promise: (promise, messages) => {
     return toast.promise(promise, {
-      loading: messages.loading || 'Caricamento...',
-      success: messages.success || 'Completato!',
-      error: messages.error || 'Errore!',
+      loading: messages.loading || "Caricamento...",
+      success: messages.success || "Completato!",
+      error: messages.error || "Errore!",
     });
   },
 

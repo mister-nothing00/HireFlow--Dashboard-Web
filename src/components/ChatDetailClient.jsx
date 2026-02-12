@@ -7,7 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/lib/toast";
 
-// ─── Memoized MessageBubble ───────────────────────────────────────
+// Componente per ogni messaggio nella chat, con stili diversi per messaggi nostri vs loro
 const MessageBubble = memo(function MessageBubble({ msg, isOurs }) {
   const time = new Date(msg.created_at).toLocaleTimeString("it-IT", {
     hour: "2-digit",
@@ -34,7 +34,7 @@ const MessageBubble = memo(function MessageBubble({ msg, isOurs }) {
   );
 });
 
-// ─── Main ─────────────────────────────────────────────────────────
+// Componente principale per la pagina di dettaglio chat, gestisce stato messaggi, invio e real-time
 export default function ChatDetailClient({ match, initialMessages, company }) {
   const router = useRouter();
   const [messages, setMessages] = useState(initialMessages);

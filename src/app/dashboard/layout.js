@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { name: "Impostazioni", href: "/dashboard/settings", icon: Settings },
 ];
 
-// NavItem memoizzato: re-render solo se cambiano href o isActive
+// Memoized NavItem per evitare re-render inutili quando cambia lo stato di unread o company
 const NavItem = memo(function NavItem({ item, isActive, unread }) {
   const Icon = item.icon;
   return (

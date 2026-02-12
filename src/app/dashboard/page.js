@@ -6,7 +6,7 @@ import { SkeletonDashboard } from "@/components/ui/Skeletons";
 
 export const dynamic = "force-dynamic";
 
-/// ─── Server Component per fetch iniziale e auth ───────────────────────────────────────
+// ✅ Fetch iniziale spostata in un componente figlio per sfruttare Suspense
 async function DashboardContent() {
   const { user, company, supabase } = await getServerSession();
 

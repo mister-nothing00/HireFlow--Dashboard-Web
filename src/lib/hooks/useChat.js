@@ -4,6 +4,7 @@ import { useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "../supabase.js";
 
+// Hook personalizzato per gestire la logica della chat, inclusi fetch iniziale dei messaggi, invio e real-time updates
 export function useChat(matchId) {
   const { messages, setMessages, addMessage, setActiveChat } = useApp();
   const chatMessages = messages[matchId] || [];

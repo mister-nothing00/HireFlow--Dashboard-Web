@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { X, Heart, MapPin, Euro, Briefcase, Star } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
-import { useApp } from '@/context/AppContext'; // ✅ Context
+import { useApp } from '@/context/AppContext';
 
-// ─── Candidate Card ───────────────────────────────────────────────
+
+// Card candidato con animazioni di swipe e overlay feedback
 const CandidateCard = memo(function CandidateCard({ candidate, direction }) {
   const c = candidate;
   const initials = `${c.first_name?.[0] || ''}${c.last_name?.[0] || ''}`;
@@ -89,7 +90,7 @@ const CandidateCard = memo(function CandidateCard({ candidate, direction }) {
   );
 });
 
-// ─── Main ─────────────────────────────────────────────────────────
+// Componente principale per la pagina dei candidati, gestisce stato swipe e logica match
 export default function CandidatesClient({ company, initialCandidates }) {
   const { candidateIndex, nextCandidate } = useApp(); // ✅ Context
   const [candidates, setCandidates] = useState(initialCandidates);

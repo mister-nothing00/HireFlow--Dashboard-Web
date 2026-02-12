@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 
+// Hook personalizzato per gestire autenticazione, sessione e dati company, con supporto a real-time auth state changes
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();

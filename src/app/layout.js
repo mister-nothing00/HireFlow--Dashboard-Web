@@ -10,7 +10,7 @@ export const metadata = {
   description: "La piattaforma di recruiting moderna",
 };
 
-// Root layout è un Server Component - NON aggiungere 'use client'
+// RootLayout con AppProvider per contesto globale e Toaster per notifiche
 export default function RootLayout({ children }) {
   return (
     <html lang="it">

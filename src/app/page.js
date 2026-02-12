@@ -15,6 +15,7 @@ import {
   Download,
 } from 'lucide-react';
 
+// Landing page con design moderno, animazioni e copy accattivante per massimizzare conversioni
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">

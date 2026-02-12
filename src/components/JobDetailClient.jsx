@@ -2,11 +2,12 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Edit2, Trash2, Users, Briefcase, Euro, Calendar, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ArrowLeft, MapPin, Edit2, Trash2, Users, Briefcase, Euro, ToggleLeft, ToggleRight } from 'lucide-react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase'; // ✅ CLIENT supabase
+import { supabase } from '@/lib/supabase'; 
 import { showToast } from '@/lib/toast';
 
+// Componente per visualizzare i dettagli di un job, con azioni per modificare, eliminare e attivare/disattivare
 export default function JobDetailClient({ job: initialJob, company }) {
   const router = useRouter();
   const [job, setJob]         = useState(initialJob);

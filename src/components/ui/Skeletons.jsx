@@ -3,7 +3,7 @@ const Bone = ({ className = "" }) => (
   <div className={`bg-gray-200 rounded animate-pulse ${className}`} />
 );
 
-// ─────────────────────────────────────────
+// ─────────────────────────────────────────  
 // 1. DASHBOARD HOME
 // ─────────────────────────────────────────
 export function SkeletonDashboard() {

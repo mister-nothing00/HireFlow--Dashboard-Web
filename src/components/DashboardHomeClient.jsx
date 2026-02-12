@@ -5,7 +5,7 @@ import { Briefcase, Users, CheckCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-// ─── Sub-components ─────────────────────────────────────────────
+// StatCard per visualizzare metriche chiave con icone e trend
 const StatCard = memo(function StatCard({ stat }) {
   const Icon = stat.icon;
   return (
@@ -28,6 +28,7 @@ const StatCard = memo(function StatCard({ stat }) {
   );
 });
 
+// Item per attività recente, mostra chi ha fatto swipe e quando
 const ActivityItem = memo(function ActivityItem({ activity }) {
   return (
     <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
@@ -58,8 +59,7 @@ function formatTimeAgo(ts) {
   return `${Math.floor(hrs / 24)}g fa`;
 }
 
-// ─── Main Component ─────────────────────────────────────────────
-
+// Componente principale per la dashboard home, mostra stats chiave e attività recente, con real-time updates
 export default function DashboardHomeClient({
   company,
   initialStats,

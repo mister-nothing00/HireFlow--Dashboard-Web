@@ -7,6 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/lib/toast";
 
+// Componente per modificare un lavoro esistente, con form precompilato e funzioni di update/delete
 export default function EditJobClient({ job, company }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

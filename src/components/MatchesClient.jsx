@@ -1,7 +1,5 @@
 
-// ════════════════════════════════════
-// src/app/dashboard/matches/MatchesClient.jsx
-// ════════════════════════════════════
+
 'use client';
 
 import { useState, useEffect, useMemo, memo, useCallback } from 'react';
@@ -10,6 +8,7 @@ import { MessageCircle, User, MapPin, Briefcase, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
 
+// Card per ogni match, mostra info candidato, job associato e azioni per vedere profilo o chat
 const MatchCard = memo(function MatchCard({ match }) {
   const c = match.candidate;
   const initials = `${c?.first_name?.[0] || ''}${c?.last_name?.[0] || ''}`;
@@ -79,6 +78,7 @@ const MatchCard = memo(function MatchCard({ match }) {
   );
 });
 
+// Componente principale per la pagina dei match, con ricerca e real-time updates
 export default function MatchesClient({ company, initialMatches }) {
   const [matches, setMatches] = useState(initialMatches);
   const [search, setSearch]   = useState('');

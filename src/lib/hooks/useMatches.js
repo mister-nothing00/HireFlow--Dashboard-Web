@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { supabase } from "../supabase.js";
 
+// Hook personalizzato per gestire la logica dei matches, inclusi fetch iniziale, merge con swipes e real-time updates
 export function useMatches() {
   const { matches, setMatches, setMatchesLoading, company } = useApp();
   const companyId = company?.id;
