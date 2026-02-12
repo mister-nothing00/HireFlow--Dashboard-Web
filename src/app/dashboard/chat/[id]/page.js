@@ -1,4 +1,3 @@
-// SERVER COMPONENT – fetch iniziale SSR
 import { redirect } from 'next/navigation';
 import { getServerSession } from '@/lib/supabase-server';
 import ChatDetailClient from '@/components/ChatDetailClient';
@@ -6,11 +5,12 @@ import ChatDetailClient from '@/components/ChatDetailClient';
 export const dynamic = 'force-dynamic';
 
 export default async function ChatDetailPage({ params }) {
-  const matchId = params.id;
+  // ✅ FIX: await params
+  const { id: matchId } = await params;
+  
   const { user, company, supabase } = await getServerSession();
   if (!user || !company) redirect('/login');
 
-  // Fetch match + messaggi server-side
   const [matchRes, messagesRes] = await Promise.all([
     supabase
       .from('matches')
@@ -20,7 +20,7 @@ export default async function ChatDetailPage({ params }) {
         job:jobs(id, title, location)
       `)
       .eq('id', matchId)
-      .eq('company_id', company.id) // sicurezza: solo match della tua company
+      .eq('company_id', company.id)
       .single(),
 
     supabase
