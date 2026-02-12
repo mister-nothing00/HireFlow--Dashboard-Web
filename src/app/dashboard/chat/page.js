@@ -11,7 +11,7 @@ export default function ChatListPage() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const { company } = useStore();
+  const { company } = useApp();
 
   const fetchMatches = useCallback(async () => {
     if (!company?.id) return;

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from "react";
-import { useStore } from "../store";
-import { supabase } from "../supabase-server";
+import { useApp } from "../../context/AppContext";
+import { supabase } from "../supabase.js";
 
 export function useMatches() {
-  const { matches, setMatches, setMatchesLoading, company } = useStore();
+  const { matches, setMatches, setMatchesLoading, company } = useApp();
   const companyId = company?.id;
 
   useEffect(() => {

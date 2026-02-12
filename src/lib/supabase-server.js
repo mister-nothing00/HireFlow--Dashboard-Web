@@ -32,7 +32,6 @@ export async function createSupabaseServer() {
   );
 }
 
-// Helper: ottieni sessione + company dal server
 export async function getServerSession() {
   const supabase = await createSupabaseServer();
 
@@ -40,14 +39,24 @@ export async function getServerSession() {
     data: { session },
     error,
   } = await supabase.auth.getSession();
-  if (error || !session)
+  
+  if (error || !session) {
     return { session: null, user: null, company: null, supabase };
+  }
 
-  const { data: company } = await supabase
+  console.log("🔍 Looking for company with owner_id:", session.user.id);
+
+  const { data: company, error: companyError } = await supabase
     .from("companies")
     .select("*")
-    .eq("user_id", session.user.id)
+    .eq("owner_id", session.user.id) // ✅ CORRETTO! owner_id
     .single();
+
+  if (companyError) {
+    console.warn("⚠️ Company query error:", companyError);
+  }
+
+  console.log("✅ Company found:", company?.name || "NONE");
 
   return { session, user: session.user, company, supabase };
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
-import { supabase } from "../supabase-server.js";
+import { supabase } from "../supabase.js";
 
 export function useChat(matchId) {
   const { messages, setMessages, addMessage, setActiveChat } = useApp();
