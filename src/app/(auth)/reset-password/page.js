@@ -14,14 +14,13 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Verifica che ci sia hash token da Supabase
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) {
-      console.log('❌ No hash token, redirecting to login');
+      console.log('No hash token, redirecting to login');
       router.push('/login');
     } else {
-      console.log('✅ Hash token found:', hash.substring(0, 50));
+      console.log('Hash token found');
     }
   }, [router]);
 
@@ -48,20 +47,18 @@ export default function ResetPasswordPage() {
 
       if (updateError) throw updateError;
 
-      console.log('✅ Password updated successfully');
+      console.log('Password updated successfully');
       setSuccess(true);
       
-      // Redirect dopo 2 secondi
       setTimeout(() => router.push('/login'), 2000);
     } catch (err) {
-      console.error('❌ Reset password error:', err);
+      console.error('Reset password error:', err);
       setError(err.message || 'Errore nel reset della password');
     } finally {
       setLoading(false);
     }
   };
 
-  // Success state
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
@@ -82,12 +79,10 @@ export default function ResetPasswordPage() {
     );
   }
 
-  // Reset form
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
         
-        {/* Back Button */}
         <Link 
           href="/login"
           className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition"
@@ -96,7 +91,6 @@ export default function ResetPasswordPage() {
           <span>Torna al login</span>
         </Link>
 
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mb-4 shadow-lg shadow-blue-600/30">
             <Lock className="text-white" size={28} />
@@ -109,7 +103,6 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleReset} className="space-y-5">
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -164,10 +157,9 @@ export default function ResetPasswordPage() {
           </button>
         </form>
 
-        {/* Info */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
           <p className="text-sm text-blue-900">
-            <strong>💡 Requisiti password:</strong>
+            <strong>Requisiti password:</strong>
             <br />
             Minimo 8 caratteri
           </p>
@@ -175,4 +167,4 @@ export default function ResetPasswordPage() {
       </div>
     </div>
   );
-}ò
+}
