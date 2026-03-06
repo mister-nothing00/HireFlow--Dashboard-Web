@@ -1,18 +1,20 @@
 # 🚀 HireFlow — Web Dashboard
 
-> **Il recruiting trasparente.** HireFlow abbina aziende e candidati come Tinder: veloce, bidirezionale, senza CV infiniti.
+> Perché mandare 100 candidature nel vuoto quando puoi fare match come su Tinder?
 
 ---
 
-## 📖 Cos'è HireFlow
+## Ok ma cos'è esattamente?
 
-HireFlow è una piattaforma di recruiting innovativa che combina il concetto di LinkedIn con la meccanica di Tinder. Il **matching è bidirezionale**: le aziende swipano i candidati, i candidati swipano le offerte di lavoro. Solo quando entrambi si scelgono reciprocamente si crea un match — eliminando candidature a vuoto e processi infiniti.
+HireFlow nasce da una frustrazione reale: il recruiting tradizionale fa schifo. Le aziende pubblicano job e aspettano CV. I candidati mandano candidature e aspettano risposte che non arrivano mai. Tutti aspettano. Nessuno è felice.
 
-Questo repository contiene la **web dashboard per recruiter**, costruita con Next.js 15. L'app mobile per candidati (React Native + Expo) è in un repo separato.
+L'idea è semplice: **il match deve essere bidirezionale**. Le aziende swipano i candidati, i candidati swipano le offerte. Solo quando entrambi si scelgono si crea un match — come Tinder, ma per il lavoro. Senza sprechi di tempo, senza ghosting, con i salari visibili fin dall'inizio.
+
+Questo repo è la **web dashboard per recruiter**. L'app mobile per candidati (React Native + Expo) vive in un repo separato.
 
 ---
 
-## 🛠️ Tech Stack
+## Stack tecnico
 
 | Layer | Tecnologia |
 |---|---|
@@ -26,62 +28,32 @@ Questo repository contiene la **web dashboard per recruiter**, costruita con Nex
 
 ---
 
-## ✨ Features
+## Cosa puoi fare
 
-### 🏠 Dashboard Home
-- Stats in tempo reale: jobs attivi, candidati valutati, match totali, in attesa
-- Feed attività recente
-- Quick action per scoprire nuovi candidati
-- Aggiornamenti live via Supabase Realtime
+### Dashboard home
+Apri l'app e hai subito tutto sotto controllo: jobs attivi, candidati valutati, match confermati, candidature in attesa. Tutto aggiornato in tempo reale senza ricaricare la pagina — grazie a Supabase Realtime.
 
-### 💼 Gestione Jobs
-- Creazione offerte con salary obbligatorio (trasparenza totale)
-- Campi: titolo, descrizione, contratto, remote policy, seniority, skills richieste, nice-to-have
-- Lista jobs con filtri e ricerca
-- Dettaglio job con attiva/disattiva e eliminazione
-- Modifica job esistenti
+### Jobs
+Crei un'offerta di lavoro in pochi minuti. Il salary è obbligatorio — niente di quel "RAL da definire" che fa perdere tempo a tutti. Puoi specificare contratto, remote policy, seniority, skills richieste e nice-to-have. Modifichi, attivi, disattivi, elimini quando vuoi.
 
-### 👥 Candidati
-- Interfaccia swipe (left/right) per valutare candidati
-- Card candidato con skills, salary range, esperienza, preferenze remote
-- Profilo completo candidato con tutte le informazioni
-- Swipe destro → controllo automatico match bidirezionale
-- Stato swipe persistito per ogni candidato
+### Candidati
+Qui viene il bello. Swipa left se non ti convince, right se ti interessa. Se anche il candidato ha swipato right su uno dei tuoi job — boom, match. Il sistema lo rileva in automatico in tempo reale.
 
-### 🎉 Matches
-- Lista di tutti i match reciproci confermati
-- Ricerca per nome/headline candidato
-- Aggiornamenti realtime su nuovi match
-- Link diretto a profilo candidato e chat
+### Matches
+Lista pulita di tutti i match reciproci. Puoi cercare per nome, vedere il profilo completo del candidato o aprire direttamente la chat. Solo persone che si sono scelte a vicenda — zero rumore.
 
-### 💬 Chat
-- Lista conversazioni ordinate per ultimo messaggio
-- Chat in tempo reale con optimistic update
-- Badge messaggi non letti nella sidebar
-- Mark as read automatico all'apertura
-- Supporto invio con Enter (Shift+Enter per a capo)
+### Chat
+Messaggistica in tempo reale con optimistic update (il messaggio appare subito, senza aspettare la risposta del server). Badge messaggi non letti nella sidebar, mark as read automatico quando apri la conversazione. Invii con Enter, vai a capo con Shift+Enter.
 
-### ⚙️ Impostazioni
-- Visualizzazione e modifica profilo recruiter
-- Modifica dati azienda (nome, sito, location, dimensione, settore)
-- Toggle notifiche in-app e email alerts
+### Impostazioni
+Modifichi profilo, dati azienda, preferenze notifiche. Niente di speciale, ma funziona tutto.
 
-### 🔐 Autenticazione
-- Signup multistep con creazione company contestuale
-- Login con email/password
-- Middleware di protezione route (redirect automatici)
-- Sessione gestita via Supabase SSR
-
-### 🌐 SEO & Performance
-- Metadata ottimizzati (OG, Twitter Card, robots)
-- Sitemap dinamica con jobs attivi
-- Canonical URL configurato
-- Favicon multi-formato (ico, png, apple-touch)
-- Server Components dove possibile
+### Auth
+Signup multistep che crea account e company in un unico flusso. Login classico email/password. Middleware che protegge tutte le route della dashboard — prova ad accedere a `/dashboard` senza essere loggato e ti ritrovi al login.
 
 ---
 
-## 📁 Struttura del Progetto
+## 📁 Struttura del progetto
 
 ```
 hireflow-web/
@@ -135,7 +107,7 @@ hireflow-web/
 │   │   └── JobDetailClient.jsx
 │   │
 │   ├── context/
-│   │   └── AppContext.jsx        # Auth, chat, candidati state globale
+│   │   └── AppContext.jsx        # Stato globale: auth, chat, candidati
 │   │
 │   ├── lib/
 │   │   ├── supabase.js           # Client Supabase (browser)
@@ -151,7 +123,7 @@ hireflow-web/
 
 ---
 
-## 🗄️ Schema Database (Supabase)
+## Database (Supabase)
 
 ```sql
 -- Aziende (recruiter)
@@ -162,7 +134,7 @@ jobs              (id, company_id, title, description, contract_type,
                    remote_policy, seniority, salary_min, salary_max,
                    required_skills[], nice_to_have_skills[], is_active, ...)
 
--- Candidati (creati dall'app mobile)
+-- Candidati — popolati dall'app mobile
 candidates        (id, first_name, last_name, headline, bio, skills[],
                    experience_years, salary_min, salary_max,
                    remote_preference, location, links, ...)
@@ -184,104 +156,72 @@ messages          (id, match_id, sender_id, sender_type, content,
 
 ---
 
-## 🚀 Setup Locale
+## Setup locale
 
-### Prerequisiti
-- Node.js 18+
-- Account Supabase
-- Account Vercel (per deploy)
-
-### 1. Clona il repository
 ```bash
+# 1. Clona
 git clone https://github.com/mister-nothing00/HireFlow--Dashboard-Web.git
 cd hireflow-web
-```
 
-### 2. Installa dipendenze
-```bash
+# 2. Installa
 npm install
-```
 
-### 3. Configura variabili d'ambiente
-Crea `.env.local` nella root:
-```env
+# 3. Crea .env.local con le tue credenziali Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-```
 
-### 4. Avvia il server di sviluppo
-```bash
+# 4. Avvia
 npm run dev
 ```
 
-Apri [http://localhost:3000](http://localhost:3000)
+Vai su [http://localhost:3000](http://localhost:3000) e dovresti vedere la landing page.
 
 ---
 
-## 🌐 Deploy
+## Deploy
 
-Il progetto è deployato su **Vercel** con deploy automatico ad ogni push su `main`.
-
-```bash
-# Build di produzione locale
-npm run build
-npm start
-```
-
-Variabili d'ambiente da configurare su Vercel:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+Su Vercel, deploy automatico ad ogni push su `main`. Aggiungi le due variabili d'ambiente nel pannello Vercel e sei a posto.
 
 ---
 
-## 🔄 Come Funziona il Matching
+## 🔄 Come funziona il matching (la parte interessante)
 
 ```
-1. Recruiter pubblica un job su HireFlow Web
-2. Candidato vede il job sull'app mobile e swipa → RIGHT (interessato)
-3. Recruiter vede il candidato sulla dashboard e swipa → RIGHT
-4. Sistema rileva match bidirezionale → crea record in `matches`
-5. Si sblocca la chat tra azienda e candidato
+1. Recruiter pubblica un job
+2. Candidato lo vede sull'app mobile → swipa RIGHT
+3. Recruiter vede il candidato sulla dashboard → swipa RIGHT
+4. Il sistema rileva il match bidirezionale → crea il record in matches
+5. Si sblocca la chat
 ```
 
-Il controllo match avviene in tempo reale: quando il recruiter swipa right, il sistema controlla automaticamente se quel candidato ha già swipato right su uno dei job dell'azienda.
+Non c'è un algoritmo magico — c'è solo rispetto del tempo di entrambi. Se non sei interessato, non swipare. Se lo sei, lo scoprirete insieme.
 
 ---
 
-## 📱 App Mobile
+## App mobile
 
-L'app mobile per candidati è sviluppata in **React Native + Expo SDK 54** ed è disponibile in un repository separato.
-
-Features mobile:
-- Discovery jobs con swipe (Tinder-like)
-- Social feed
-- Profilo candidato
-- Chat con le aziende
-- Notifiche push
+Sviluppata in React Native + Expo SDK 54, repo separato. Ha tutto: swipe jobs, social feed, profilo, chat con le aziende. La versione mobile è quella che usano i candidati — questa dashboard è per chi assume.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-- [ ] OAuth login (Google, LinkedIn)
+- [ ] OAuth (Google, LinkedIn, GitHub)
 - [ ] Push notifications
-- [ ] Analytics avanzati per le aziende
-- [ ] Filtri avanzati candidati (skills, salary, location)
-- [ ] Piano pricing e Stripe integration
-- [ ] App Store / Play Store release
+- [ ] Analytics per le aziende
+- [ ] Filtri avanzati candidati
+- [ ] Pricing + Stripe
+- [ ] App Store / Play Store
 
 ---
 
-## 👨‍💻 Autore
+## Chi l'ha costruito
 
-**Francesco Davide di Vita**
-Full-Stack Developer
+Sono Francesco, developer full-stack. Ho costruito HireFlow perché volevo un progetto reale da mostrare — non un altro todo-list o clone di Netflix. Se ti interessa collaborare, parlami pure.
 
-- LinkedIn: [linkedin.com/in/francescodavidevita](https://www.linkedin.com/in/francesco-di-vita/)
-- GitHub: [github.com/francescodavidevita](https://github.com/mister-nothing00)
+- LinkedIn: [Francesco Di Vita](https://www.linkedin.com/in/francesco-di-vita/)
+- GitHub: [mister-nothing00](https://github.com/mister-nothing00)
 
 ---
-
-## 📄 Copyright
 
 © 2026 Francesco Davide di Vita
