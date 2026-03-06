@@ -17,6 +17,14 @@ import TypingTitle from "@/components/ui/TypingTitle";
 import HeroStats from "@/components/ui/HeroStats";
 import UltimateHeroDemo from "@/components/ui/UltimateHeroDemo.jsx";
 
+export const metadata = {
+  title: 'HireFlow - Il Recruiting Trasparente',
+  description: 'Dimentica CV infiniti e processi lunghi mesi. HireFlow trova i candidati perfetti in 72 ore con matching bidirezionale tra aziende e candidati. Gratis per i candidati.',
+  alternates: {
+    canonical: 'https://hire-flow-dashboard-web-git-699fc5-francescos-projects-3c47c947.vercel.app/',
+  },
+};
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
