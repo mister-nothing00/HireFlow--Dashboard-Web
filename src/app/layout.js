@@ -10,7 +10,7 @@ export const metadata = {
   description: "La piattaforma di recruiting moderna",
 };
 
-// Layout principale dell'applicazione che avvolge tutte le pagine e fornisce il contesto globale e il toaster per le notifiche
+//  Layout principale dell'app
 export default function RootLayout({ children }) {
   return (
     <html lang="it">

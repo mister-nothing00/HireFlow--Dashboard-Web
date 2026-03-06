@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import { useApp } from "../../context/AppContext";
 import { supabase } from "../supabase.js";
 
-// Hook personalizzato per gestire la logica dei matches, inclusi fetch iniziale, merge con swipes e real-time updates
+// Custom hook per gestire i matches, con supporto per fetch iniziale dei matches e sottoscrizione a real-time updates tramite Supabase, integrato con lo stato globale di AppContext
 export function useMatches() {
   const { matches, setMatches, setMatchesLoading, company } = useApp();
   const companyId = company?.id;
 
+  // Effettua il fetch iniziale dei matches e si sottoscrive a real-time updates tramite Supabase, con pulizia della sottoscrizione al unmount
   useEffect(() => {
-    // Nessuna company → stop skeleton subito
+   
     if (!companyId) {
       setMatchesLoading(false);
       return;
@@ -98,8 +99,9 @@ export function useMatches() {
       console.log("🔴 Unsubscribing matches...");
       if (channel) supabase.removeChannel(channel);
     };
-  }, [companyId]); // ← Solo companyId, non fetchMatches!
+  }, [companyId]); // Rerun se cambia companyId
 
+  // Calcola statistiche sui matches, memoizzate per evitare ricalcoli inutili
   const stats = {
     total: matches.length,
     matched: matches.filter((m) => m.hasMatch).length,

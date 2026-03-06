@@ -4,7 +4,7 @@ import { useEffect, useCallback } from "react";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "../supabase.js";
 
-// Hook personalizzato per gestire la logica della chat, inclusi fetch iniziale dei messaggi, invio e real-time updates
+// Custom hook per gestire lo stato della chat, con supporto per fetch iniziale dei messaggi, invio di nuovi messaggi e sottoscrizione a real-time updates tramite Supabase, integrato con lo stato globale di AppContext
 export function useChat(matchId) {
   const { messages, setMessages, addMessage, setActiveChat } = useApp();
   const chatMessages = messages[matchId] || [];
@@ -21,6 +21,7 @@ export function useChat(matchId) {
     };
   }, [matchId]);
 
+  // Funzione per fetchare i messaggi di una chat specifica, ordinati per data, e aggiorna lo stato globale
   const fetchMessages = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -37,6 +38,7 @@ export function useChat(matchId) {
     }
   }, [matchId, setMessages]);
 
+  // Funzione per sottoscrivere a real-time updates dei messaggi di una chat specifica, e aggiorna lo stato globale quando arrivano nuovi messaggi
   const subscribeToMessages = useCallback(() => {
     const channel = supabase
       .channel(`chat-messages-${matchId}`)
@@ -58,6 +60,7 @@ export function useChat(matchId) {
     return () => supabase.removeChannel(channel);
   }, [matchId, addMessage]);
 
+  // Funzione per inviare un nuovo messaggio, con optimistic update e gestione degli errori
   const sendMessage = useCallback(
     async (content, senderId, senderType = "company") => {
       if (!content?.trim()) return { error: "Content vuoto" };

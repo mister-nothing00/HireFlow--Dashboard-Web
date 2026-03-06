@@ -10,7 +10,7 @@ async function CandidatesContent() {
   const { user, company, supabase } = await getServerSession();
   if (!user || !company) redirect('/login');
 
-  // Candidati non ancora swipati da questa company
+  // Ottieni gli ID dei candidati già swipati dall'azienda
   const { data: swipedIds } = await supabase
     .from('company_swipes')
     .select('candidate_id')

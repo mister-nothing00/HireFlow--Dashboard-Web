@@ -5,7 +5,7 @@ import { Briefcase, Users, CheckCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-// StatCard per visualizzare metriche chiave con icone e trend
+// Card per ogni statistica chiave, con icona, valore e trend, cliccabile per approfondire
 const StatCard = memo(function StatCard({ stat }) {
   const Icon = stat.icon;
   return (
@@ -28,7 +28,7 @@ const StatCard = memo(function StatCard({ stat }) {
   );
 });
 
-// Item per attività recente, mostra chi ha fatto swipe e quando
+// Item per ogni attività recente, mostra info candidato e tempo trascorso, con memoizzazione per performance
 const ActivityItem = memo(function ActivityItem({ activity }) {
   return (
     <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
@@ -48,6 +48,7 @@ const ActivityItem = memo(function ActivityItem({ activity }) {
   );
 });
 
+// Funzione helper per formattare il tempo trascorso in modo leggibile (es. "5min fa", "2h fa")
 function formatTimeAgo(ts) {
   if (!ts) return "";
   const diff = Date.now() - new Date(ts).getTime();
@@ -59,7 +60,7 @@ function formatTimeAgo(ts) {
   return `${Math.floor(hrs / 24)}g fa`;
 }
 
-// Componente principale per la dashboard home, mostra stats chiave e attività recente, con real-time updates
+// Componente principale del dashboard, mostra stats chiave e attività recente, con aggiornamenti in tempo reale tramite Supabase
 export default function DashboardHomeClient({
   company,
   initialStats,
@@ -68,7 +69,7 @@ export default function DashboardHomeClient({
   const [stats, setStats] = useState(initialStats);
   const [activity, setActivity] = useState(initialActivity);
 
-  // 📡 Real-time: aggiorna stats senza ricaricare
+  // Effettua la sottoscrizione ai canali realtime di Supabase per ricevere aggiornamenti in tempo reale su jobs, matches e swipes, e aggiorna lo stato di conseguenza
   useEffect(() => {
     if (!company?.id) return;
 

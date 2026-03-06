@@ -8,7 +8,7 @@ import { MessageCircle, User, MapPin, Briefcase, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { showToast } from '@/lib/toast';
 
-// Card per ogni match, mostra info candidato, job associato e azioni per vedere profilo o chat
+// Card per ogni match, mostra info chiave del candidato e job associato, con azioni rapide per vedere profilo o chat, con memoizzazione per performance
 const MatchCard = memo(function MatchCard({ match }) {
   const c = match.candidate;
   const initials = `${c?.first_name?.[0] || ''}${c?.last_name?.[0] || ''}`;
@@ -78,7 +78,7 @@ const MatchCard = memo(function MatchCard({ match }) {
   );
 });
 
-// Componente principale per la pagina dei match, con ricerca e real-time updates
+// ─── Main ─────────────────────────────────────────────────────────
 export default function MatchesClient({ company, initialMatches }) {
   const [matches, setMatches] = useState(initialMatches);
   const [search, setSearch]   = useState('');

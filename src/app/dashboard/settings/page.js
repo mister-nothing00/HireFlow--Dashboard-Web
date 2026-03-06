@@ -17,7 +17,7 @@ function Row({ label, value }) {
 }
 
 export default function SettingsPage() {
-  const { user, company, settings, updateSettings } = useApp(); // ✅
+  const { user, company, settings, updateSettings } = useApp(); 
   const { logout } = useAuth();
   const [saving, setSaving] = useState(false);
 

@@ -1,6 +1,7 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
 
+// Middleware per gestire l'autenticazione e la protezione del percorso
 export async function middleware(request) {
   let response = NextResponse.next({
     request: {
@@ -26,38 +27,40 @@ export async function middleware(request) {
         remove(name, options) {
           response.cookies.set({
             name,
-            value: '',
+            value: "",
             ...options,
           });
         },
       },
-    }
+    },
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
-                     request.nextUrl.pathname.startsWith('/signup');
-  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const isAuthPage =
+    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname.startsWith("/signup");
+  const isDashboard = request.nextUrl.pathname.startsWith("/dashboard");
 
-  // Redirect non-authenticated users trying to access dashboard
+  // Reindirizza gli utenti non autenticati alla pagina di accesso quando provano ad accedere alla dashboard
   if (!session && isDashboard) {
-    console.log('🚫 Middleware: Redirecting to /login (no session)');
-    return NextResponse.redirect(new URL('/login', request.url));
+    console.log("🚫 Middleware: Redirecting to /login (no session)");
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Redirect authenticated users away from auth pages
+  // Reindirizza gli utenti autenticati lontano dalle pagine di autenticazione (login/signup)
   if (session && isAuthPage) {
-    console.log('✅ Middleware: Redirecting to /dashboard (already authenticated)');
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    console.log(
+      "✅ Middleware: Redirecting to /dashboard (already authenticated)",
+    );
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;
 }
 
+// Configura il middleware per applicarsi solo a specifici percorsi
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/login',
-    '/signup',
-  ],
+  matcher: ["/dashboard/:path*", "/login", "/signup"],
 };

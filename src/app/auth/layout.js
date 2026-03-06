@@ -11,7 +11,7 @@ export default function AuthLayout({ children }) {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl" />
       </div>
 
-      {/* Logo top-left */}
+      {/* Logo */}
       <Link 
         href="/"
         className="absolute top-8 left-8 flex items-center gap-2 text-gray-900 hover:text-blue-600 transition z-10"

@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { name: "Impostazioni", href: "/dashboard/settings", icon: Settings },
 ];
 
-// Memoized NavItem per evitare re-render inutili quando cambia lo stato di unread o company
+// NavItem memoizzato per evitare re-render inutili quando cambia lo stato di unread
 const NavItem = memo(function NavItem({ item, isActive, unread }) {
   const Icon = item.icon;
   return (
@@ -52,13 +52,13 @@ const NavItem = memo(function NavItem({ item, isActive, unread }) {
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const { logout } = useAuth();
-  const company = useCompany(); // solo company dal Context, no re-render inutili
+  const company = useCompany(); 
   const [unread, setUnread] = useState(0);
 
   const isActive = (href) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
-  // 🔔 Messaggi non letti + real-time
+  // Gestione messaggi non letti in tempo reale
   useEffect(() => {
     if (!company?.id) return;
 
@@ -114,7 +114,7 @@ export default function DashboardLayout({ children }) {
     };
   }, [company?.id, pathname]);
 
-  // Reset unread quando entri in chat
+  // Resetta contatore unread quando si entra nella chat
   useEffect(() => {
     if (pathname.startsWith("/dashboard/chat")) setUnread(0);
   }, [pathname]);

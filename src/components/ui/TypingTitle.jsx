@@ -18,15 +18,15 @@ export default function TypingTitle() {
     
     const timeout = setTimeout(() => {
       if (!isDeleting) {
-        // Typing
+        
         if (text.length < currentTitle.length) {
           setText(currentTitle.slice(0, text.length + 1));
         } else {
-          // Pause before deleting
+          
           setTimeout(() => setIsDeleting(true), 3000);
         }
       } else {
-        // Deleting
+        
         if (text.length > 0) {
           setText(text.slice(0, -1));
         } else {

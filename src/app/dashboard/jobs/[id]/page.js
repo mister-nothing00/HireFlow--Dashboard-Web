@@ -5,6 +5,7 @@ import JobDetailClient from "@/components/JobDetailClient";
 export const dynamic = "force-dynamic";
 
 export default async function JobDetailPage({ params }) {
+ // Ottieni l'ID del job dalla route
   const { id: jobId } = await params;
 
   const { user, company, supabase } = await getServerSession();

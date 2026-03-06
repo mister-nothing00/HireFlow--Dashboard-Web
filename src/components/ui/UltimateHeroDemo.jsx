@@ -204,7 +204,7 @@ export default function UltimateHeroDemo() {
               ))}
             </div>
 
-            {/* Match Counter */}
+            {/*  */}
             {matches > 0 && (
               <div className="text-center mb-4">
                 <div className="inline-block bg-green-100 text-green-700 px-6 py-2 rounded-full font-bold animate-bounce">
@@ -213,7 +213,7 @@ export default function UltimateHeroDemo() {
               </div>
             )}
 
-            {/* Try Me Badge */}
+            {/* Provami - Badge */}
             <div className="absolute -top-4 -right-4 bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full font-bold text-sm shadow-lg animate-bounce">
               👆 Provami!
             </div>
@@ -245,7 +245,7 @@ export default function UltimateHeroDemo() {
         </button>
       </div>
 
-      {/* Instructions */}
+      {/* Istruzioni */}
       <div className="text-center mt-6">
         <p className="text-sm text-gray-600 font-medium">
           ❌ Scarta • ❤️ Match • ⭐ Super Like

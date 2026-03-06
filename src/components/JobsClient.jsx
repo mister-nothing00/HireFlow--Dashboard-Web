@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo, memo, useCallback } from 'react';
-import Link from 'next/link';
-import { Plus, Eye, Edit2, Trash2, Search } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { showToast } from '@/lib/toast';
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
+import Link from "next/link";
+import { Plus, Eye, Edit2, Trash2, Search } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { showToast } from "@/lib/toast";
 
-// Card per ogni job, con azioni per vedere, modificare ed eliminare
+// Card per ogni job, mostra info chiave e azioni rapide, con memoizzazione per performance
 const JobCard = memo(function JobCard({ job, onDelete }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition">
@@ -15,19 +15,28 @@ const JobCard = memo(function JobCard({ job, onDelete }) {
           <h3 className="text-lg font-bold text-gray-900">{job.title}</h3>
           <p className="text-sm text-gray-500 mt-1">{job.location}</p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-          job.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-        }`}>
-          {job.is_active ? 'Attivo' : 'Inattivo'}
+        <span
+          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            job.is_active
+              ? "bg-green-100 text-green-700"
+              : "bg-gray-100 text-gray-500"
+          }`}
+        >
+          {job.is_active ? "Attivo" : "Inattivo"}
         </span>
       </div>
 
       <div className="flex gap-2 text-sm text-gray-600 mb-4">
-        <span className="px-2 py-1 bg-gray-100 rounded-lg">{job.contract_type}</span>
-        <span className="px-2 py-1 bg-gray-100 rounded-lg">{job.remote_type}</span>
+        <span className="px-2 py-1 bg-gray-100 rounded-lg">
+          {job.contract_type}
+        </span>
+        <span className="px-2 py-1 bg-gray-100 rounded-lg">
+          {job.remote_type}
+        </span>
         {job.salary_min && (
           <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg">
-            €{job.salary_min.toLocaleString()} - €{(job.salary_max || 0).toLocaleString()}
+            €{job.salary_min.toLocaleString()} - €
+            {(job.salary_max || 0).toLocaleString()}
           </span>
         )}
       </div>
@@ -58,9 +67,9 @@ const JobCard = memo(function JobCard({ job, onDelete }) {
 
 // ─── Main ─────────────────────────────────────────────────────────
 export default function JobsClient({ company, initialJobs }) {
-  const [jobs, setJobs]         = useState(initialJobs);
-  const [search, setSearch]     = useState('');
-  const [filter, setFilter]     = useState('all');
+  const [jobs, setJobs] = useState(initialJobs);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
   // 📡 Real-time
   useEffect(() => {
@@ -68,38 +77,54 @@ export default function JobsClient({ company, initialJobs }) {
 
     const channel = supabase
       .channel(`jobs-realtime-${company.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs', filter: `company_id=eq.${company.id}` },
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "jobs",
+          filter: `company_id=eq.${company.id}`,
+        },
         (payload) => {
-          if (payload.eventType === 'INSERT')
-            setJobs(prev => [payload.new, ...prev]);
-          else if (payload.eventType === 'UPDATE')
-            setJobs(prev => prev.map(j => j.id === payload.new.id ? payload.new : j));
-          else if (payload.eventType === 'DELETE')
-            setJobs(prev => prev.filter(j => j.id !== payload.old.id));
-        })
+          if (payload.eventType === "INSERT")
+            setJobs((prev) => [payload.new, ...prev]);
+          else if (payload.eventType === "UPDATE")
+            setJobs((prev) =>
+              prev.map((j) => (j.id === payload.new.id ? payload.new : j)),
+            );
+          else if (payload.eventType === "DELETE")
+            setJobs((prev) => prev.filter((j) => j.id !== payload.old.id));
+        },
+      )
       .subscribe();
 
     return () => supabase.removeChannel(channel);
   }, [company?.id]);
 
   const handleDelete = useCallback(async (jobId) => {
-    if (!confirm('Sei sicuro di voler eliminare questo job?')) return;
-    const { error } = await supabase.from('jobs').delete().eq('id', jobId);
-    if (error) { showToast.error('Errore eliminazione'); return; }
-    showToast.success('Job eliminato');
+    if (!confirm("Sei sicuro di voler eliminare questo job?")) return;
+    const { error } = await supabase.from("jobs").delete().eq("id", jobId);
+    if (error) {
+      showToast.error("Errore eliminazione");
+      return;
+    }
+    showToast.success("Job eliminato");
     // Real-time aggiornerà automaticamente la lista
   }, []);
 
   // Filtraggio memoizzato
   const filtered = useMemo(() => {
-    return jobs.filter(j => {
-      const matchesSearch = !search ||
+    return jobs.filter((j) => {
+      const matchesSearch =
+        !search ||
         j.title?.toLowerCase().includes(search.toLowerCase()) ||
         j.location?.toLowerCase().includes(search.toLowerCase());
       const matchesFilter =
-        filter === 'all'    ? true :
-        filter === 'active' ? j.is_active :
-        !j.is_active;
+        filter === "all"
+          ? true
+          : filter === "active"
+            ? j.is_active
+            : !j.is_active;
       return matchesSearch && matchesFilter;
     });
   }, [jobs, search, filter]);
@@ -123,18 +148,21 @@ export default function JobsClient({ company, initialJobs }) {
       {/* Filtri */}
       <div className="flex gap-4 mb-6">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
           <input
             type="text"
             placeholder="Cerca job..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
         <select
           value={filter}
-          onChange={e => setFilter(e.target.value)}
+          onChange={(e) => setFilter(e.target.value)}
           className="px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
         >
           <option value="all">Tutti</option>
@@ -147,15 +175,20 @@ export default function JobsClient({ company, initialJobs }) {
       {filtered.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-5xl mb-4">📋</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Nessun job trovato</h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Nessun job trovato
+          </h3>
           <p className="text-gray-500 mb-6">Pubblica il tuo primo annuncio</p>
-          <Link href="/dashboard/jobs/new" className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold">
+          <Link
+            href="/dashboard/jobs/new"
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold"
+          >
             Crea Job
           </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filtered.map(job => (
+          {filtered.map((job) => (
             <JobCard key={job.id} job={job} onDelete={handleDelete} />
           ))}
         </div>

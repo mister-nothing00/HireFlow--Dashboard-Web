@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 
-// Utility per mostrare notifiche toast in modo centralizzato, con stili personalizzati per successi ed errori
+// Funzione per mostrare toast di successo, errore, loading o basati su promise, con stili personalizzati per ogni tipo di messaggio
 export const showToast = {
   success: (message) => {
     toast.success(message, {

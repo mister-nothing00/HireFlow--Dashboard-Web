@@ -89,7 +89,7 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* LEFT SIDE: Testo + Stats */}
+            {/*  Testo + Stats */}
             <div className="space-y-8">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-bold shadow-md">
@@ -143,7 +143,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* RIGHT SIDE: Swipe Demo */}
+            {/* Swipe Demo */}
             <div className="relative lg:pl-8">
               <UltimateHeroDemo />
             </div>
@@ -484,7 +484,7 @@ export default function LandingPage() {
   );
 }
 
-// Components
+// Componenti UI per la pagina principale
 function Feature({ icon, title, description, gradient }) {
   return (
     <div className="group p-8 bg-white rounded-2xl border border-gray-200 hover:border-transparent hover:shadow-2xl transition-all duration-300">

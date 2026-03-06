@@ -28,7 +28,7 @@ export default function CandidateProfilePage() {
 
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [swipeStatus, setSwipeStatus] = useState(null); // 'right', 'left', null
+  const [swipeStatus, setSwipeStatus] = useState(null); 
   const [swiping, setSwiping] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function CandidateProfilePage() {
     }
   }, [candidateId]);
 
-  // Fetch dati del candidato
+  // Fetch dati, del candidato
   const fetchCandidate = async () => {
     try {
       setLoading(true);
@@ -61,7 +61,7 @@ export default function CandidateProfilePage() {
     }
   };
 
-  // Controlla se abbiamo già swipato questo candidato
+  // Controlla se l'azienda ha già swipato questo candidato
   const checkSwipeStatus = async () => {
     try {
       const { data } = await supabase
@@ -75,12 +75,12 @@ export default function CandidateProfilePage() {
         console.log("📌 Swipe status:", data.direction);
       }
     } catch (error) {
-      // Nessun swipe ancora, è normale
+      
       console.log("ℹ️ No swipe yet for this candidate");
     }
   };
 
-  // Esegui swipe dal profilo
+  
   const handleSwipe = async (direction) => {
     if (swiping || !company?.id) return;
     setSwiping(true);
@@ -116,7 +116,7 @@ export default function CandidateProfilePage() {
     }
   };
 
-  // Funzione per eseguire lo swipe e gestire il match
+ // Controlla se c'è un match con un job dell'azienda
   const checkForMatch = async () => {
     try {
       const { data, error } = await supabase
@@ -132,7 +132,7 @@ export default function CandidateProfilePage() {
       if (data && data.length > 0) {
         const jobId = data[0].job_id;
 
-        // ✅ FIX CRITICO: inserisce il match nella tabella matches
+      // Crea il match
         const { error: matchError } = await supabase.from("matches").insert({
           candidate_id: candidateId,
           job_id: jobId,

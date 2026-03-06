@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 import { showToast } from "@/lib/toast";
 
+// Opzioni per select
 const REMOTE_OPTIONS = ["remote", "hybrid", "onsite"];
 const CONTRACT_OPTIONS = ["full-time", "part-time", "contract", "internship"];
 const SENIORITY_OPTIONS = ["junior", "mid", "senior", "lead"];
@@ -20,6 +21,7 @@ function FieldError({ msg }) {
   ) : null;
 }
 
+// Form iniziale vuoto
 const INITIAL_FORM = {
   title: "",
   description: "",
@@ -37,7 +39,7 @@ const INITIAL_FORM = {
 
 export default function NewJobPage() {
   const router = useRouter();
-  const { company } = useApp(); // ✅ Context
+  const { company } = useApp(); 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState(INITIAL_FORM);
@@ -227,7 +229,7 @@ export default function NewJobPage() {
           </div>
         </div>
 
-        {/* Salary */}
+        {/* Salario */}
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             Salary Range Annuo <span className="text-red-500">*</span>

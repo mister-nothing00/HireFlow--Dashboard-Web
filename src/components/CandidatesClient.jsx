@@ -92,7 +92,7 @@ const CandidateCard = memo(function CandidateCard({ candidate, direction }) {
 
 // Componente principale per la pagina dei candidati, gestisce stato swipe e logica match
 export default function CandidatesClient({ company, initialCandidates }) {
-  const { candidateIndex, nextCandidate } = useApp(); // ✅ Context
+  const { candidateIndex, nextCandidate } = useApp(); 
   const [candidates, setCandidates] = useState(initialCandidates);
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -125,7 +125,7 @@ export default function CandidatesClient({ company, initialCandidates }) {
       console.error('❌ handleSwipe error:', err);
     }
 
-    // Animazione completata → prossimo candidato
+    // Reset stato swipe e passa al candidato successivo dopo breve delay per animazione
     setTimeout(() => {
       setSwipeDirection(null);
       setLoading(false);
@@ -135,7 +135,7 @@ export default function CandidatesClient({ company, initialCandidates }) {
 
   const checkMatch = useCallback(async (candidateId) => {
     try {
-      // Controlla se candidato ha swipato right su un job della company
+     // Controlla se il candidato ha già fatto swipe right su un job di questa azienda
       const { data } = await supabase
         .from('swipes')
         .select('job_id, job:jobs!inner(id, company_id)')

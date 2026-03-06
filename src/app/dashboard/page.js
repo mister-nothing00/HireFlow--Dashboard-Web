@@ -6,7 +6,7 @@ import { SkeletonDashboard } from "@/components/ui/Skeletons";
 
 export const dynamic = "force-dynamic";
 
-// ✅ Fetch iniziale spostata in un componente figlio per sfruttare Suspense
+// Componente di contenuto principale con fetch server-side
 async function DashboardContent() {
   const { user, company, supabase } = await getServerSession();
 
@@ -14,7 +14,7 @@ async function DashboardContent() {
     redirect("/login");
   }
 
-  // 🚀 Fetch iniziale in parallelo server-side
+  // Fetch parallelo di tutte le statistiche e attività recenti
   const [jobsRes, swipesRes, matchesRes, recentRes] = await Promise.all([
     supabase
       .from("jobs")
@@ -63,7 +63,6 @@ async function DashboardContent() {
   );
 }
 
-// ✅ Main component con Suspense
 export default function DashboardPage() {
   return (
     <Suspense fallback={<SkeletonDashboard />}>

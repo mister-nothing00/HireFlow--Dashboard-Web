@@ -5,7 +5,7 @@ import ChatDetailClient from '@/components/ChatDetailClient';
 export const dynamic = 'force-dynamic';
 
 export default async function ChatDetailPage({ params }) {
-  // ✅ FIX: await params
+  // Ottieni l'ID del match dalla route
   const { id: matchId } = await params;
   
   const { user, company, supabase } = await getServerSession();

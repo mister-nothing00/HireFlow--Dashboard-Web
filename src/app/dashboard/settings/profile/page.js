@@ -17,6 +17,7 @@ export default function ProfileEditPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Form state
   const [formData, setFormData] = useState({
     // User
     fullName: '',
@@ -55,7 +56,7 @@ export default function ProfileEditPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // ── Upload logo azienda ──
+  // Funzione per gestire l'upload del logo
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !company?.id) return;

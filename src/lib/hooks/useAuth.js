@@ -5,14 +5,14 @@ import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useApp } from "@/context/AppContext";
 
-// Hook personalizzato per gestire autenticazione, sessione e dati company, con supporto a real-time auth state changes
+// Custom hook per gestire autenticazione, sessione e dati company, con supporto per real-time updates e gestione dello stato globale tramite AppContext
 export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, company, setUser, setCompany, clearAuth } = useApp();
   const [loading, setLoading] = useState(true);
 
-  // Fetch dati company dato userId
+// Funzione per fetchare i dati della company associata all'utente loggato, e aggiorna lo stato globale
   const fetchCompanyData = useCallback(
     async (userId) => {
       try {
@@ -39,7 +39,7 @@ export function useAuth() {
     [setCompany],
   );
 
-  // Check sessione iniziale
+// Funzione per controllare la sessione attiva, aggiorna stato globale e gestisce redirezione se necessario
   const checkSession = useCallback(async () => {
     try {
       const {

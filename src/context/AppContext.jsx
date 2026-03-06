@@ -15,7 +15,7 @@ export function AppProvider({ children }) {
     theme: 'light',
   });
 
-  // ── Chat state (in-memory) ────────────────────────────────────
+// ── Chat state ───────────────────────────────────────────────
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessagesMap]  = useState({}); // { [matchId]: Message[] }
 

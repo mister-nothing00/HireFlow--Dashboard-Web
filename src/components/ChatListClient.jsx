@@ -5,7 +5,7 @@ import { MessageCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-// Componente principale per la lista delle chat, con ricerca e real-time updates
+// Componente principale per la lista delle chat, gestisce stato matches, ricerca e real-time
 export default function ChatListClient({ company, initialMatches }) {
   const [matches, setMatches] = useState(initialMatches);
   const [searchQuery, setSearchQuery] = useState("");

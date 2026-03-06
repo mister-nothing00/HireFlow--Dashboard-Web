@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-// Funzione per creare un client Supabase lato server, con gestione dei cookie per autenticazione
+// Funzione per creare un client Supabase lato server, con gestione dei cookie per autenticazione e sessione, utilizzabile in Server Components e API routes
 export async function createSupabaseServer() {
   const cookieStore = await cookies();
 

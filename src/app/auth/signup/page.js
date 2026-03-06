@@ -33,15 +33,14 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Form state consolidato
   const [formData, setFormData] = useState({
-    // Step 1: Account
+    // Account
     email: "",
     password: "",
     confirmPassword: "",
     fullName: "",
 
-    // Step 2: Azienda
+    // Azienda
     companyName: "",
     companyWebsite: "",
     companyLocation: "",
@@ -99,7 +98,7 @@ export default function SignupPage() {
     try {
       console.log("🚀 Starting signup process...");
 
-      // 1. Crea utente su Supabase Auth
+      // Creazione utente su Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -115,7 +114,7 @@ export default function SignupPage() {
 
       console.log("✅ User created:", authData.user.email);
 
-      // 2. Crea company su DB (collegata al nuovo user)
+      // Creazione company su DB
       const { data: companyData, error: companyError } = await supabase
         .from("companies")
         .insert([
@@ -138,10 +137,10 @@ export default function SignupPage() {
 
       console.log("✅ Company created:", companyData.name);
 
-      // 3. Salva company nello store globale
+      // salvataggio company in context
       setCompany(companyData);
 
-      // 4. Redirect a dashboard
+      // redirect a dashboard
       console.log("✅ Redirecting to dashboard...");
       router.push("/dashboard");
     } catch (err) {
@@ -156,7 +155,6 @@ export default function SignupPage() {
     <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
       {/* Progress Steps */}
       <div className="mb-8">
-        {/* Step Circles con linee */}
         <div className="flex items-center justify-between">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
@@ -165,7 +163,6 @@ export default function SignupPage() {
 
             return (
               <div key={step.id} className="flex items-center flex-1">
-                {/* Step Circle */}
                 <div className="flex flex-col items-center flex-1">
                   <div
                     className={`
@@ -188,7 +185,6 @@ export default function SignupPage() {
                   </p>
                 </div>
 
-                {/* Line tra gli step (non dopo l'ultimo) */}
                 {index < STEPS.length - 1 && (
                   <div
                     className={`

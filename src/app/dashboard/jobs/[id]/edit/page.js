@@ -5,7 +5,7 @@ import EditJobClient from "@/components/EditJobClient";
 export const dynamic = "force-dynamic";
 
 export default async function EditJobPage({ params }) {
-  // ✅ FIX: await params
+  // Ottieni l'ID del job dalla route
   const { id: jobId } = await params;
 
   const { user, company, supabase } = await getServerSession();

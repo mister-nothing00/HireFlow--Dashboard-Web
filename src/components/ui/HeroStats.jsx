@@ -9,6 +9,7 @@ const STATS = [
   { value: 72, suffix: "h", label: "Tempo medio", emoji: "⚡" }
 ];
 
+// Componente per visualizzare le statistiche animate nella sezione Hero
 function MiniStat({ value, suffix, label, emoji, delay = 0 }) {
   const [count, setCount] = useState(0);
 

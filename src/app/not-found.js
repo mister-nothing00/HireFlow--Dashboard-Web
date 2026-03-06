@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Home, ArrowLeft } from 'lucide-react';
 
-// Pagina 404 personalizzata con design accattivante e messaggio amichevole
+// Pagina 404 personalizzata per migliorare l'esperienza utente quando una pagina non viene trovata
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
