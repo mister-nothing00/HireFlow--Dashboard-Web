@@ -6,7 +6,7 @@
 
 ## Ok ma cos'è esattamente?
 
-HireFlow nasce da una frustrazione reale: il recruiting tradizionale fa schifo. Le aziende pubblicano job e aspettano CV. I candidati mandano candidature e aspettano risposte che non arrivano mai. Tutti aspettano. Nessuno è felice.
+HireFlow nasce da una frustrazione reale: il recruiting tradizionale è obsoleto. Le aziende pubblicano job e aspettano CV. I candidati mandano candidature e aspettano risposte che non arrivano mai. Tutti aspettano. Nessuno è felice.
 
 L'idea è semplice: **il match deve essere bidirezionale**. Le aziende swipano i candidati, i candidati swipano le offerte. Solo quando entrambi si scelgono si crea un match — come Tinder, ma per il lavoro. Senza sprechi di tempo, senza ghosting, con i salari visibili fin dall'inizio.
 
