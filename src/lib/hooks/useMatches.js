@@ -1,17 +1,16 @@
 'use client';
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "../../context/AppContext";
 import { supabase } from "../supabase.js";
 
-// Custom hook per gestire i matches, con supporto per fetch iniziale dei matches e sottoscrizione a real-time updates tramite Supabase, integrato con lo stato globale di AppContext
 export function useMatches() {
-  const { matches, setMatches, setMatchesLoading, company } = useApp();
+  const { company } = useApp();
+  const [matches, setMatches] = useState([]);
+  const [matchesLoading, setMatchesLoading] = useState(true); // ✅ FIX: stato locale invece di useStore
   const companyId = company?.id;
 
-  // Effettua il fetch iniziale dei matches e si sottoscrive a real-time updates tramite Supabase, con pulizia della sottoscrizione al unmount
   useEffect(() => {
-   
     if (!companyId) {
       setMatchesLoading(false);
       return;
@@ -66,8 +65,7 @@ export function useMatches() {
           return new Date(b.swipedAt) - new Date(a.swipedAt);
         });
 
-        console.log(`✅ Matches loaded: ${sorted.length}`);
-        setMatches(sorted);
+        if (!cancelled) setMatches(sorted);
       } catch (error) {
         console.error("❌ Error fetching matches:", error);
       } finally {
@@ -77,7 +75,6 @@ export function useMatches() {
 
     fetchMatches();
 
-    // Realtime subscription
     channel = supabase
       .channel(`matches-${companyId}`)
       .on("postgres_changes", {
@@ -85,32 +82,20 @@ export function useMatches() {
         schema: "public",
         table: "matches",
         filter: `company_id=eq.${companyId}`,
-      }, async (payload) => {
-        console.log("🎉 New match real-time!", payload.new.candidate_id);
-        // Refetch completo per avere tutti i dati aggiornati
-        fetchMatches();
-      })
-      .subscribe((status) => {
-        console.log("📡 Matches subscription:", status);
-      });
+      }, () => fetchMatches())
+      .subscribe();
 
     return () => {
       cancelled = true;
-      console.log("🔴 Unsubscribing matches...");
       if (channel) supabase.removeChannel(channel);
     };
-  }, [companyId]); // Rerun se cambia companyId
+  }, [companyId]);
 
-  // Calcola statistiche sui matches, memoizzate per evitare ricalcoli inutili
   const stats = {
     total: matches.length,
     matched: matches.filter((m) => m.hasMatch).length,
     interested: matches.filter((m) => !m.hasMatch).length,
   };
 
-  return {
-    matches,
-    stats,
-    loading: useStore((state) => state.matchesLoading),
-  };
+  return { matches, stats, loading: matchesLoading };
 }

@@ -90,7 +90,7 @@ export function useAuth() {
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
     clearAuth();
-    router.push("/login");
+    router.push("/auth/login");
     console.log("🚪 Logout completato");
   }, [clearAuth, router]);
 

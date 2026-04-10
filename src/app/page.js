@@ -73,13 +73,13 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-4">
               <Link
-                href="/login"
+                href="/auth/login"
                 className="text-gray-700 hover:text-blue-600 font-semibold transition hidden md:block"
               >
                 Accedi
               </Link>
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 font-bold shadow-lg shadow-blue-600/30 transition"
               >
                 Inizia Gratis
